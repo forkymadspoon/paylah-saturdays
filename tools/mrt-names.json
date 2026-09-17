@@ -1,0 +1,586 @@
+[
+ {
+  "name": "Admiralty",
+  "opened": "10 February 1996"
+ },
+ {
+  "name": "Aljunied",
+  "opened": "4 November 1989"
+ },
+ {
+  "name": "Ang Mo Kio",
+  "opened": "7 November 1987"
+ },
+ {
+  "name": "Bartley",
+  "opened": "28 May 2009"
+ },
+ {
+  "name": "Bayfront",
+  "opened": "14 January 2012"
+ },
+ {
+  "name": "Bayshore",
+  "opened": "23 June 2024"
+ },
+ {
+  "name": "Beauty World",
+  "opened": "27 December 2015"
+ },
+ {
+  "name": "Bedok",
+  "opened": "4 November 1989"
+ },
+ {
+  "name": "Bedok North",
+  "opened": ""
+ },
+ {
+  "name": "Bedok Reservoir",
+  "opened": ""
+ },
+ {
+  "name": "Bencoolen",
+  "opened": ""
+ },
+ {
+  "name": "Bendemeer",
+  "opened": ""
+ },
+ {
+  "name": "Bishan",
+  "opened": "7 November 1987"
+ },
+ {
+  "name": "Boon Keng",
+  "opened": "20 June 2003"
+ },
+ {
+  "name": "Boon Lay",
+  "opened": "6 July 1990"
+ },
+ {
+  "name": "Botanic Gardens",
+  "opened": "8 October 2011"
+ },
+ {
+  "name": "Braddell",
+  "opened": "7 November 1987"
+ },
+ {
+  "name": "Bras Basah",
+  "opened": "17 April 2010"
+ },
+ {
+  "name": "Bright Hill",
+  "opened": "28 August 2021"
+ },
+ {
+  "name": "Buangkok",
+  "opened": "15 January 2006"
+ },
+ {
+  "name": "Bugis",
+  "opened": "4 November 1989"
+ },
+ {
+  "name": "Bukit Batok",
+  "opened": ""
+ },
+ {
+  "name": "Bukit Gombak",
+  "opened": ""
+ },
+ {
+  "name": "Bukit Panjang",
+  "opened": "27 December 2015"
+ },
+ {
+  "name": "Buona Vista",
+  "opened": "12 March 1988"
+ },
+ {
+  "name": "Caldecott",
+  "opened": "8 October 2011"
+ },
+ {
+  "name": "Canberra",
+  "opened": "2 November 2019"
+ },
+ {
+  "name": "Cantonment",
+  "opened": "12 July 2026"
+ },
+ {
+  "name": "Cashew",
+  "opened": "27 December 2015"
+ },
+ {
+  "name": "Changi Airport",
+  "opened": "8 February 2002"
+ },
+ {
+  "name": "Chinatown",
+  "opened": "20 June 2003"
+ },
+ {
+  "name": "Chinese Garden",
+  "opened": "5 November 1988"
+ },
+ {
+  "name": "Choa Chu Kang",
+  "opened": "10 March 1990"
+ },
+ {
+  "name": "City Hall",
+  "opened": "12 December 1987"
+ },
+ {
+  "name": "Clarke Quay",
+  "opened": "20 June 2003"
+ },
+ {
+  "name": "Clementi",
+  "opened": ""
+ },
+ {
+  "name": "Commonwealth",
+  "opened": ""
+ },
+ {
+  "name": "Dakota",
+  "opened": "17 April 2010"
+ },
+ {
+  "name": "Dhoby Ghaut",
+  "opened": "12 December 1987"
+ },
+ {
+  "name": "Dover",
+  "opened": "18 October 2001"
+ },
+ {
+  "name": "Downtown",
+  "opened": "22 December 2013"
+ },
+ {
+  "name": "Esplanade",
+  "opened": "17 April 2010"
+ },
+ {
+  "name": "Eunos",
+  "opened": "4 November 1989"
+ },
+ {
+  "name": "Expo",
+  "opened": "10 January 2001"
+ },
+ {
+  "name": "Farrer Park",
+  "opened": "20 June 2003"
+ },
+ {
+  "name": "Farrer Road",
+  "opened": "8 October 2011"
+ },
+ {
+  "name": "Fort Canning",
+  "opened": "21 October 2017"
+ },
+ {
+  "name": "Gardens by the Bay",
+  "opened": "13 November 2022"
+ },
+ {
+  "name": "Geylang Bahru",
+  "opened": "21 October 2017"
+ },
+ {
+  "name": "Great World",
+  "opened": "13 November 2022"
+ },
+ {
+  "name": "Gul Circle",
+  "opened": "18 June 2017"
+ },
+ {
+  "name": "HarbourFront",
+  "opened": "20 June 2003"
+ },
+ {
+  "name": "Havelock",
+  "opened": "13 November 2022"
+ },
+ {
+  "name": "Haw Par Villa",
+  "opened": "8 October 2011"
+ },
+ {
+  "name": "Hillview",
+  "opened": "27 December 2015"
+ },
+ {
+  "name": "Holland Village",
+  "opened": "8 October 2011"
+ },
+ {
+  "name": "Hougang",
+  "opened": "20 June 2003"
+ },
+ {
+  "name": "Hume",
+  "opened": "28 February 2025"
+ },
+ {
+  "name": "Jalan Besar",
+  "opened": "21 October 2017"
+ },
+ {
+  "name": "Joo Koon",
+  "opened": "28 February 2009"
+ },
+ {
+  "name": "Jurong East",
+  "opened": "5 November 1988"
+ },
+ {
+  "name": "Kaki Bukit",
+  "opened": "21 October 2017"
+ },
+ {
+  "name": "Kallang",
+  "opened": "4 November 1989"
+ },
+ {
+  "name": "Katong Park",
+  "opened": "23 June 2024"
+ },
+ {
+  "name": "Kembangan",
+  "opened": "4 November 1989"
+ },
+ {
+  "name": "Kent Ridge",
+  "opened": "8 October 2011"
+ },
+ {
+  "name": "Keppel",
+  "opened": "12 July 2026"
+ },
+ {
+  "name": "Khatib",
+  "opened": "20 December 1988"
+ },
+ {
+  "name": "King Albert Park",
+  "opened": "27 December 2015"
+ },
+ {
+  "name": "Kovan",
+  "opened": "20 June 2003"
+ },
+ {
+  "name": "Kranji",
+  "opened": "10 February 1996"
+ },
+ {
+  "name": "Labrador Park",
+  "opened": "8 October 2011"
+ },
+ {
+  "name": "Lakeside",
+  "opened": "5 November 1988"
+ },
+ {
+  "name": "Lavender",
+  "opened": "4 November 1989"
+ },
+ {
+  "name": "Lentor",
+  "opened": "28 August 2021"
+ },
+ {
+  "name": "Little India",
+  "opened": "20 June 2003"
+ },
+ {
+  "name": "Lorong Chuan",
+  "opened": "28 May 2009"
+ },
+ {
+  "name": "MacPherson",
+  "opened": "17 April 2010"
+ },
+ {
+  "name": "Marina Bay",
+  "opened": "4 November 1989"
+ },
+ {
+  "name": "Marina South Pier",
+  "opened": "23 November 2014"
+ },
+ {
+  "name": "Marine Parade",
+  "opened": ""
+ },
+ {
+  "name": "Marine Terrace",
+  "opened": ""
+ },
+ {
+  "name": "Marsiling",
+  "opened": "10 February 1996"
+ },
+ {
+  "name": "Marymount",
+  "opened": "28 May 2009"
+ },
+ {
+  "name": "Mattar",
+  "opened": "21 October 2017"
+ },
+ {
+  "name": "Maxwell",
+  "opened": "13 November 2022"
+ },
+ {
+  "name": "Mayflower",
+  "opened": "28 August 2021"
+ },
+ {
+  "name": "Mountbatten",
+  "opened": "17 April 2010"
+ },
+ {
+  "name": "Napier",
+  "opened": "13 November 2022"
+ },
+ {
+  "name": "Newton",
+  "opened": "12 December 1987"
+ },
+ {
+  "name": "Nicoll Highway",
+  "opened": "17 April 2010"
+ },
+ {
+  "name": "Novena",
+  "opened": "12 December 1987"
+ },
+ {
+  "name": "one-north",
+  "opened": "8 October 2011"
+ },
+ {
+  "name": "Orchard",
+  "opened": "12 December 1987"
+ },
+ {
+  "name": "Orchard Boulevard",
+  "opened": "13 November 2022"
+ },
+ {
+  "name": "Outram Park",
+  "opened": "12 December 1987"
+ },
+ {
+  "name": "Pasir Panjang",
+  "opened": "8 October 2011"
+ },
+ {
+  "name": "Pasir Ris",
+  "opened": "16 December 1989"
+ },
+ {
+  "name": "Paya Lebar",
+  "opened": "4 November 1989"
+ },
+ {
+  "name": "Pioneer",
+  "opened": "28 February 2009"
+ },
+ {
+  "name": "Potong Pasir",
+  "opened": "20 June 2003"
+ },
+ {
+  "name": "Prince Edward Road",
+  "opened": "12 July 2026"
+ },
+ {
+  "name": "Promenade",
+  "opened": "17 April 2010"
+ },
+ {
+  "name": "Punggol",
+  "opened": "20 June 2003"
+ },
+ {
+  "name": "Punggol Coast",
+  "opened": "10 December 2024"
+ },
+ {
+  "name": "Queenstown",
+  "opened": "12 March 1988"
+ },
+ {
+  "name": "Raffles Place",
+  "opened": "12 December 1987"
+ },
+ {
+  "name": "Redhill",
+  "opened": "12 March 1988"
+ },
+ {
+  "name": "Rochor",
+  "opened": "27 December 2015"
+ },
+ {
+  "name": "Sembawang",
+  "opened": "10 February 1996"
+ },
+ {
+  "name": "Sengkang",
+  "opened": ""
+ },
+ {
+  "name": "Serangoon",
+  "opened": ""
+ },
+ {
+  "name": "Shenton Way",
+  "opened": "13 November 2022"
+ },
+ {
+  "name": "Siglap",
+  "opened": "23 June 2024"
+ },
+ {
+  "name": "Simei",
+  "opened": "16 December 1989"
+ },
+ {
+  "name": "Sixth Avenue",
+  "opened": "27 December 2015"
+ },
+ {
+  "name": "Somerset",
+  "opened": "12 December 1987"
+ },
+ {
+  "name": "Springleaf",
+  "opened": "28 August 2021"
+ },
+ {
+  "name": "Stadium",
+  "opened": "17 April 2010"
+ },
+ {
+  "name": "Stevens",
+  "opened": "27 December 2015"
+ },
+ {
+  "name": "Tai Seng",
+  "opened": "17 April 2010"
+ },
+ {
+  "name": "Tampines",
+  "opened": "16 December 1989"
+ },
+ {
+  "name": "Tampines East",
+  "opened": ""
+ },
+ {
+  "name": "Tampines West",
+  "opened": ""
+ },
+ {
+  "name": "Tan Kah Kee",
+  "opened": "27 December 2015"
+ },
+ {
+  "name": "Tanah Merah",
+  "opened": "4 November 1989"
+ },
+ {
+  "name": "Tanjong Katong",
+  "opened": "23 June 2024"
+ },
+ {
+  "name": "Tanjong Pagar",
+  "opened": "12 December 1987"
+ },
+ {
+  "name": "Tanjong Rhu",
+  "opened": "23 June 2024"
+ },
+ {
+  "name": "Telok Ayer",
+  "opened": "22 December 2013"
+ },
+ {
+  "name": "Telok Blangah",
+  "opened": "8 October 2011"
+ },
+ {
+  "name": "Tiong Bahru",
+  "opened": "12 March 1988"
+ },
+ {
+  "name": "Toa Payoh",
+  "opened": "7 November 1987"
+ },
+ {
+  "name": "Tuas Crescent",
+  "opened": ""
+ },
+ {
+  "name": "Tuas Link",
+  "opened": ""
+ },
+ {
+  "name": "Tuas West Road",
+  "opened": ""
+ },
+ {
+  "name": "Ubi",
+  "opened": ""
+ },
+ {
+  "name": "Upper Changi",
+  "opened": ""
+ },
+ {
+  "name": "Upper Thomson",
+  "opened": "28 August 2021"
+ },
+ {
+  "name": "Woodlands",
+  "opened": "10 February 1996"
+ },
+ {
+  "name": "Woodlands North",
+  "opened": ""
+ },
+ {
+  "name": "Woodlands South",
+  "opened": ""
+ },
+ {
+  "name": "Woodleigh",
+  "opened": "20 June 2011"
+ },
+ {
+  "name": "Yew Tee",
+  "opened": "10 February 1996"
+ },
+ {
+  "name": "Yio Chu Kang",
+  "opened": "7 November 1987"
+ },
+ {
+  "name": "Yishun",
+  "opened": "20 December 1988"
+ }
+]

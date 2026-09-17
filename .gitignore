@@ -1,1 +1,4 @@
 .DS_Store
+tools/*-wiki.txt
+tools/sample*.json
+tools/demo-merchants.json
