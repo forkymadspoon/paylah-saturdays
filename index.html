@@ -8,6 +8,9 @@
        cdnjs.cloudflare.com      - Leaflet's script and stylesheet (map view)
        *.tile.openstreetmap.org  - map tiles, which load as images
        www.onemap.gov.sg         - postal-code lookup for the "Near Me" fallback
+       *.googletagmanager.com    - Google Analytics (GA4) loader
+       *.google-analytics.com    - GA4 measurement calls (beacon + image fallback)
+       *.analytics.google.com    - GA4 regional collection endpoints
      Anything not on this list is still refused, so an injected script pointing at an
      attacker-controlled host is blocked.
 
@@ -17,7 +20,7 @@
 
      frame-ancestors is deliberately absent: it only works as an HTTP header, and
      GitHub Pages does not let us set headers. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: https://*.tile.openstreetmap.org https://cdnjs.cloudflare.com; font-src 'self'; connect-src 'self' https://www.onemap.gov.sg; object-src 'none'; base-uri 'self'; form-action 'none'; frame-src 'none'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://*.googletagmanager.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: https://*.tile.openstreetmap.org https://cdnjs.cloudflare.com https://*.google-analytics.com https://*.googletagmanager.com; font-src 'self'; connect-src 'self' https://www.onemap.gov.sg https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com; object-src 'none'; base-uri 'self'; form-action 'none'; frame-src 'none'; upgrade-insecure-requests">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
 <!-- Google Search Console ownership verification. Must stay in the <head> of this
@@ -1127,45 +1130,18 @@ if (initialQuery) qEl.value = initialQuery;
 doSearch();
 </script>
 
-<!-- ================================================================
-     ANALYTICS SLOT — pick ONE option below, delete the other block.
-     This page has no tracking installed yet.
+<!-- Google tag (gtag.js) — GA4 property G-ZK37J9VYWP.
+     The Content-Security-Policy in <head> allows googletagmanager.com for this
+     script and google-analytics.com for the measurement calls it sends. Removing
+     this tag? Drop those origins from the CSP too, so the allowlist stays minimal. -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-ZK37J9VYWP"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
 
-     IMPORTANT — the Content-Security-Policy in <head> will BLOCK either option
-     until you allow its origin. The script will silently fail to load and the
-     browser console will show a CSP violation. Whichever you pick, add its host
-     to the script-src directive, e.g.:
-
-       GoatCounter: script-src 'self' 'unsafe-inline' https://gc.zgo.at;
-                    connect-src 'self' https://*.goatcounter.com;
-
-       GA4:         script-src 'self' 'unsafe-inline' https://www.googletagmanager.com;
-                    connect-src 'self' https://*.google-analytics.com;
-
-     Allow only the option you actually use -- every extra origin is third-party
-     code running on the page.
-
-     OPTION A — GoatCounter (free, no account limits, privacy-friendly)
-     1. Sign up free at https://www.goatcounter.com (pick a site code,
-        e.g. "yourcode" -> dashboard lives at yourcode.goatcounter.com)
-     2. Uncomment the <script> below and replace YOURCODE with your site code.
-
-     <script data-goatcounter="https://YOURCODE.goatcounter.com/count"
-             async src="//gc.zgo.at/count.js"></script>
-
-     OPTION B — Google Analytics (GA4, free)
-     1. Create a free property at https://analytics.google.com
-     2. Copy your Measurement ID (looks like G-XXXXXXXXXX)
-     3. Uncomment the two <script> tags below and replace G-XXXXXXXXXX.
-
-     <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
-     <script>
-       window.dataLayer = window.dataLayer || [];
-       function gtag(){dataLayer.push(arguments);}
-       gtag('js', new Date());
-       gtag('config', 'G-XXXXXXXXXX');
-     </script>
-     ================================================================ -->
+  gtag('config', 'G-ZK37J9VYWP');
+</script>
 
 </body>
 </html>
