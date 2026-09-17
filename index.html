@@ -4,6 +4,82 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>DBS PayLah! Saturdays — Merchant Search</title>
+<meta name="description" content="Search all 15,153 DBS PayLah! Saturdays merchants by name, postal code, area or nearest MRT. Check if your hawker stall or heartland shop is on the list.">
+<link rel="canonical" href="https://forkymadspoon.github.io/paylah-saturdays/">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#15151a" media="(prefers-color-scheme: dark)">
+
+<!-- Link previews: this tool spreads by being shared in chat, so these tags do more
+     work than anything else in the head. og:image is referenced here and committed
+     alongside index.html. -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="PayLah! Saturdays Merchant Search">
+<meta property="og:title" content="DBS PayLah! Saturdays — Merchant Search">
+<meta property="og:description" content="Search all 15,153 participating merchants by name, postal code, area or nearest MRT. Check if your hawker stall or heartland shop is on the list.">
+<meta property="og:url" content="https://forkymadspoon.github.io/paylah-saturdays/">
+<meta property="og:image" content="https://forkymadspoon.github.io/paylah-saturdays/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="PayLah! Saturdays merchant search — 15,153 entries, searchable by name, postal code, area or MRT.">
+<meta property="og:locale" content="en_SG">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="DBS PayLah! Saturdays — Merchant Search">
+<meta name="twitter:description" content="Search all 15,153 participating merchants by name, postal code, area or nearest MRT.">
+<meta name="twitter:image" content="https://forkymadspoon.github.io/paylah-saturdays/og-image.png">
+
+<!-- Structured data. Only describes what is actually on the page: a searchable
+     dataset with a working ?q= search entry point. No FAQPage/HowTo markup, since
+     the page has no visible FAQ content to back it. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://forkymadspoon.github.io/paylah-saturdays/#website",
+      "url": "https://forkymadspoon.github.io/paylah-saturdays/",
+      "name": "DBS PayLah! Saturdays — Merchant Search",
+      "description": "Search all 15,153 DBS PayLah! Saturdays participating merchants by name, postal code, address, area or nearest MRT.",
+      "inLanguage": "en-SG",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://forkymadspoon.github.io/paylah-saturdays/?q={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
+    },
+    {
+      "@type": "Dataset",
+      "@id": "https://forkymadspoon.github.io/paylah-saturdays/#dataset",
+      "name": "DBS PayLah! Saturdays participating merchants",
+      "description": "15,153 participating merchants in the DBS/POSB PayLah! Saturdays cashback campaign (29 August - 19 December 2026), parsed from the official DBS merchant PDF. Covers heartland shops, hawker centres, wet markets, coffeeshops and industrial canteens, with area and nearest-MRT groupings.",
+      "url": "https://forkymadspoon.github.io/paylah-saturdays/",
+      "inLanguage": "en-SG",
+      "spatialCoverage": {
+        "@type": "Place",
+        "name": "Singapore"
+      },
+      "isBasedOn": "https://www.dbs.com.sg/iwov-resources/media/pdf/deposits/promotions/paylah/saturdays/dbs-paylah-saturdays-participating-merchants.pdf",
+      "creator": {
+        "@type": "Person",
+        "name": "Madeleine Koh",
+        "url": "https://www.linkedin.com/in/madeleine-cckoh"
+      },
+      "temporalCoverage": "2026-08-29/2026-12-19",
+      "keywords": [
+        "DBS PayLah",
+        "Saturday cashback",
+        "hawker centres",
+        "wet markets",
+        "heartland shops",
+        "Singapore"
+      ]
+    }
+  ]
+}
+</script>
 <style>
 :root {
   --bg: #ffffff;
@@ -40,6 +116,13 @@
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+/* Headings that label each section for screen readers and crawlers without
+   altering the visual design. Real content follows each one -- this is not
+   hidden keyword text. */
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
 html { -webkit-text-size-adjust: 100%; }
 body {
   margin: 0;
@@ -320,9 +403,11 @@ footer a { color: var(--text-muted); }
     <span id="count"></span>
     <span id="cleartext" style="cursor:pointer; display:none;" onclick="clearAll()">Clear</span>
   </div>
+  <h2 class="sr-only">Search results</h2>
   <div id="results"></div>
 
   <footer>
+    <h2 class="sr-only">About this list and its data sources</h2>
     15,153 entries parsed from the official DBS/POSB PayLah! Saturday Savings merchant PDF (dated per the file's metadata). Heartland-shop rows include a direct postal code per merchant. Hawker centre, wet market, coffeeshop, and industrial-canteen rows show the postal code of the building — individual stall unit numbers are best-effort and a small number may be misparsed due to PDF text wrapping. When it matters, cross-check with DBS's original PDF or in-app list.
     <br><br>
     Nearest MRT/LRT tags are Claude's own approximation, mapped from the DBS document's area groupings to nearby stations on Singapore's currently operating lines — this is not in the source PDF, which never mentions MRT stations. It's a rough proximity guide (area-level, not per-merchant), so don't treat it as a walking-distance guarantee, especially for large areas like "Jurong" or "Raffles Place, Marina, Cecil, People's Park" that span many stations.
@@ -700,6 +785,12 @@ document.addEventListener('click', (e) => {
     renderSuggestions([]);
   }
 });
+
+// Allow ?q=<term> to pre-fill the search, so a filtered view can be shared as a link
+// (e.g. .../?q=tampines). This is also what the SearchAction in the structured data
+// points at -- the markup describes a search entry point that genuinely works.
+const initialQuery = new URLSearchParams(location.search).get('q');
+if (initialQuery) qEl.value = initialQuery;
 
 doSearch();
 </script>
