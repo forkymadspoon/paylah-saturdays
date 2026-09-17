@@ -2,3 +2,6 @@
 tools/*-wiki.txt
 tools/sample*.json
 tools/demo-merchants.json
+tools/planning-areas.geojson
+tools/geocode-full.log
+tools/geo-data.js
