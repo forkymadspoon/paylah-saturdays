@@ -777,14 +777,34 @@ function doSearch() {
     });
   }
 
-  // In Near Me mode, distance replaces the alphabetical order. Merchants whose postal
-  // code could not be geocoded have no distance, so they sort to the end rather than
-  // pretending to be at distance zero.
+  // In Near Me mode, distance replaces the alphabetical order -- but "nearest N" on its
+  // own is not the same as "near". Merchant density across Singapore varies about 12x:
+  // 500m of a town centre holds ~290 merchants, the same radius in an industrial estate
+  // holds ~23. Taking the nearest 100 unconditionally therefore reaches 6km in sparse
+  // areas while calling the result "near me".
+  //
+  // So: rank within a radius ceiling, and cap the count. The radius is what makes the
+  // answer honest; the cap is what keeps the DOM small. Sorting only what falls inside
+  // the ceiling also avoids ordering all 15k rows to display 50.
   if (nearPoint) {
-    matches = matches.map(r => {
+    const radius = NEAR_RADII[nearRadiusIdx];
+    const inside = [];
+    let beyond = 0, nearestBeyond = Infinity, unlocatable = 0;
+    for (const r of matches) {
       const c = coordsFor(r[3]);
-      return { r, d: c ? haversine(nearPoint.lat, nearPoint.lon, c.lat, c.lon) : Infinity };
-    }).sort((a, b) => a.d - b.d).map(x => x.r);
+      // A merchant whose postal code never geocoded has no position, so it cannot be
+      // ranked by distance at all. Excluded here rather than parked at the end of the
+      // list pretending to be furthest away.
+      if (!c) { unlocatable++; continue; }
+      const d = haversine(nearPoint.lat, nearPoint.lon, c.lat, c.lon);
+      if (d <= radius) inside.push({ r, d });
+      else { beyond++; if (d < nearestBeyond) nearestBeyond = d; }
+    }
+    inside.sort((a, b) => a.d - b.d);
+    nearStats = { radius, within: inside.length, beyond, nearestBeyond, unlocatable,
+                  capped: isFinite(radius) && inside.length > NEAR_K };
+    matches = (isFinite(radius) ? inside.slice(0, NEAR_K) : inside).map(x => x.r);
+    updateNearBanner();
   }
 
   currentMatches = matches;
@@ -890,6 +910,63 @@ document.addEventListener('click', (e) => {
 let nearPoint = null;           // {lat, lon, label} or null when the mode is off
 let map = null, mapPins = [], youPin = null, leafletLoading = null;
 
+// How many results Near Me shows, and how far out it is willing to look. The radius
+// widens only when the user asks, so the default answer stays genuinely local.
+const NEAR_K = 50;
+const NEAR_RADII = [2000, 5000, Infinity];
+let nearRadiusIdx = 0;
+let nearStats = null;
+
+const fmtRadius = m => isFinite(m) ? (m >= 1000 ? (m / 1000) + 'km' : m + 'm') : 'anywhere';
+// For a distance we have just described as being OUTSIDE a radius, always round away
+// from that radius. 2,040m formatted normally reads "2.0km", which contradicts the
+// "nothing within 2km" it sits next to.
+function fmtDistUp(m) {
+  if (m < 1000) {
+    const r = Math.ceil(m / 50) * 50;      // same threshold care as fmtDist:
+    if (r < 1000) return r + 'm';          // 999m must not print as "1000m"
+  }
+  return (Math.ceil(m / 100) / 10).toFixed(1) + 'km';
+}
+
+// The banner is where the ceiling is disclosed. Truncating silently would leave people
+// believing they had seen everything nearby.
+function updateNearBanner() {
+  if (!nearPoint || !nearStats) return;
+  const { radius, within, beyond, nearestBeyond, unlocatable, capped } = nearStats;
+  const where = `<strong>${escapeHtml(nearPoint.label)}</strong>`;
+  let msg;
+
+  if (within === 0) {
+    msg = beyond
+      ? `No merchants within ${fmtRadius(radius)} of ${where}. The closest is ${fmtDistUp(nearestBeyond)} away.`
+      : `No merchants match near ${where}.`;
+  } else if (capped) {
+    msg = `Nearest <strong>${NEAR_K}</strong> of ${within.toLocaleString()} within ${fmtRadius(radius)} of ${where}.`;
+  } else if (beyond) {
+    msg = `<strong>${within.toLocaleString()}</strong> within ${fmtRadius(radius)} of ${where}. Next closest is ${fmtDistUp(nearestBeyond)} away.`;
+  } else {
+    msg = `<strong>${within.toLocaleString()}</strong> near ${where}.`;
+  }
+
+  const parts = [msg, 'Straight-line, not walking distance.'];
+
+  const canWiden = nearRadiusIdx < NEAR_RADII.length - 1 && beyond > 0;
+  const widenTo = canWiden ? NEAR_RADII[nearRadiusIdx + 1] : null;
+  const buttons =
+    (canWiden ? `<button type="button" id="nearwiden">Search ${isFinite(widenTo) ? 'within ' + fmtRadius(widenTo) : 'everywhere'}</button>` : '') +
+    (nearRadiusIdx > 0 ? `<button type="button" id="nearnarrow">Back to ${fmtRadius(NEAR_RADII[0])}</button>` : '') +
+    `<button type="button" id="nearclear">Clear</button>`;
+
+  setBanner(parts.join(' ') + ' ' + buttons);
+
+  const widen = document.getElementById('nearwiden');
+  if (widen) widen.addEventListener('click', () => { nearRadiusIdx++; renderLimit = PAGE; doSearch(); if (!mapEl.hidden) drawMap(); });
+  const narrow = document.getElementById('nearnarrow');
+  if (narrow) narrow.addEventListener('click', () => { nearRadiusIdx = 0; renderLimit = PAGE; doSearch(); if (!mapEl.hidden) drawMap(); });
+  document.getElementById('nearclear').addEventListener('click', exitNearMode);
+}
+
 const nearBtn = document.getElementById('nearme');
 const nearPostalEl = document.getElementById('nearpostal');
 const nearGoEl = document.getElementById('nearpostalgo');
@@ -905,6 +982,8 @@ function setBanner(html, isErr) {
 
 function exitNearMode() {
   nearPoint = null;
+  nearStats = null;
+  nearRadiusIdx = 0;
   nearBtn.classList.remove('active');
   mapToggle.hidden = true;
   mapEl.hidden = true;
@@ -915,12 +994,11 @@ function exitNearMode() {
 
 function enterNearMode(lat, lon, label) {
   nearPoint = { lat, lon, label };
+  nearRadiusIdx = 0;
   nearBtn.classList.add('active');
   mapToggle.hidden = false;
-  setBanner(`Sorted by distance from <strong>${escapeHtml(label)}</strong>. Straight-line, not walking distance. <button type="button" id="nearclear">Clear</button>`);
-  document.getElementById('nearclear').addEventListener('click', exitNearMode);
   renderLimit = PAGE;
-  doSearch();
+  doSearch();   // builds the banner via updateNearBanner()
   if (!mapEl.hidden) drawMap();
 }
 
