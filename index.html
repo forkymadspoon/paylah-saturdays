@@ -3,14 +3,21 @@
 <head>
 <meta charset="UTF-8">
 
-<!-- Content-Security-Policy. The page loads no external scripts, styles, fonts or
-     images, so everything is locked to 'self' -- an injected <script src="evil"> is
-     blocked outright. 'unsafe-inline' is required because the styles, the two script
-     blocks and one onclick handler are all inline; it weakens script-src, but the
-     external-origin block (the part that actually matters here) still holds.
+<!-- Content-Security-Policy. Everything defaults to 'self'; each external origin
+     below is listed because a specific feature needs it, and nothing more:
+       cdnjs.cloudflare.com      - Leaflet's script and stylesheet (map view)
+       *.tile.openstreetmap.org  - map tiles, which load as images
+       www.onemap.gov.sg         - postal-code lookup for the "Near Me" fallback
+     Anything not on this list is still refused, so an injected script pointing at an
+     attacker-controlled host is blocked.
+
+     'unsafe-inline' is required because the styles, the script blocks and one onclick
+     handler are all inline; it weakens script-src, but the external-origin allowlist
+     (the part that actually matters here) still holds.
+
      frame-ancestors is deliberately absent: it only works as an HTTP header, and
      GitHub Pages does not let us set headers. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-src 'none'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: https://*.tile.openstreetmap.org https://cdnjs.cloudflare.com; font-src 'self'; connect-src 'self' https://www.onemap.gov.sg; object-src 'none'; base-uri 'self'; form-action 'none'; frame-src 'none'; upgrade-insecure-requests">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
 <!-- Google Search Console ownership verification. Must stay in the <head> of this
