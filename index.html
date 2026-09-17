@@ -812,6 +812,20 @@ doSearch();
      ANALYTICS SLOT — pick ONE option below, delete the other block.
      This page has no tracking installed yet.
 
+     IMPORTANT — the Content-Security-Policy in <head> will BLOCK either option
+     until you allow its origin. The script will silently fail to load and the
+     browser console will show a CSP violation. Whichever you pick, add its host
+     to the script-src directive, e.g.:
+
+       GoatCounter: script-src 'self' 'unsafe-inline' https://gc.zgo.at;
+                    connect-src 'self' https://*.goatcounter.com;
+
+       GA4:         script-src 'self' 'unsafe-inline' https://www.googletagmanager.com;
+                    connect-src 'self' https://*.google-analytics.com;
+
+     Allow only the option you actually use -- every extra origin is third-party
+     code running on the page.
+
      OPTION A — GoatCounter (free, no account limits, privacy-friendly)
      1. Sign up free at https://www.goatcounter.com (pick a site code,
         e.g. "yourcode" -> dashboard lives at yourcode.goatcounter.com)
