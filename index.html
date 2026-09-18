@@ -11,6 +11,7 @@
        *.googletagmanager.com    - Google Analytics (GA4) loader
        *.google-analytics.com    - GA4 measurement calls (beacon + image fallback)
        *.analytics.google.com    - GA4 regional collection endpoints
+       worker-src 'self'         - the service worker (sw.js), offline/instant repeat visits
      Anything not on this list is still refused, so an injected script pointing at an
      attacker-controlled host is blocked.
 
@@ -20,7 +21,7 @@
 
      frame-ancestors is deliberately absent: it only works as an HTTP header, and
      GitHub Pages does not let us set headers. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://*.googletagmanager.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: https://*.tile.openstreetmap.org https://cdnjs.cloudflare.com https://*.google-analytics.com https://*.googletagmanager.com; font-src 'self'; connect-src 'self' https://www.onemap.gov.sg https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com; object-src 'none'; base-uri 'self'; form-action 'none'; frame-src 'none'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://*.googletagmanager.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: https://*.tile.openstreetmap.org https://cdnjs.cloudflare.com https://*.google-analytics.com https://*.googletagmanager.com; font-src 'self'; connect-src 'self' https://www.onemap.gov.sg https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-src 'none'; upgrade-insecure-requests">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
 <!-- Google Search Console ownership verification. Must stay in the <head> of this
@@ -353,10 +354,21 @@ input[type="search"]:focus {
 .sugg-tag.tag-hood { background: #0891b2; }
 .filters {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;        /* A3: one scrolling row; wrapping cost three rows on a phone */
   gap: 8px;                 /* minimum spacing between adjacent touch targets */
   margin-bottom: 14px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+  /* fade edge so the off-screen chips are visibly there */
+  mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
 }
+.filters::-webkit-scrollbar { display: none; }
+.filters .chip { flex: none; scroll-snap-align: start; }
+.chip-fav.active, .chip-fav.active:hover { background: var(--accent); color: var(--accent-fg); border-color: transparent; }
 .chip {
   font: inherit;            /* chips are <button> now, so reset the UA font */
   padding: 8px 16px;
@@ -407,12 +419,37 @@ input[type="search"]:focus {
 }
 .row {
   display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 2px 10px;
-  padding: 12px 14px;
+  grid-template-columns: 1fr auto;        /* content | stacked controls */
+  align-items: start;
+  gap: 2px 6px;
+  padding: 8px 6px 8px 14px;
   border-bottom: 1px solid var(--border);
   touch-action: manipulation;
 }
+.row .ctrls { display: flex; flex-direction: column; align-items: center; margin: -6px 0; }
+.row .main { min-width: 0; }
+.row .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 4px; }
+.row .muted { color: var(--text-muted); font-size: 0.78rem; }
+.row .star, .row .more {
+  font: inherit; width: 44px; height: 44px; border: 0; background: none; color: var(--text-muted);
+  cursor: pointer; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center;
+  touch-action: manipulation;
+}
+.row .star::before { content: "☆"; font-size: 1.25rem; line-height: 1; }
+.row .star[aria-pressed="true"]::before { content: "★"; color: var(--accent); }
+.row .more { font-size: 1.2rem; letter-spacing: 1px; }
+.row .strip { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 6px 0 4px; }
+.row .act {
+  font: inherit; font-size: 0.85rem; min-height: 44px; display: inline-flex; align-items: center;
+  padding: 0 14px; border-radius: 999px; border: 1px solid var(--border); background: var(--bg-elevated);
+  color: var(--text); text-decoration: none; cursor: pointer; touch-action: manipulation;
+}
+.corrected { font-size: 0.65em; color: var(--accent); margin-left: 2px; vertical-align: super; }
+#updatehint {
+  display: flex; gap: 10px; align-items: center; font-size: 13px; color: var(--text-muted);
+  background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; margin: 0 0 8px;
+}
+#updatehint button { font: inherit; background: none; border: 0; color: var(--accent); text-decoration: underline; cursor: pointer; padding: 0; min-height: 44px; }
 .row:last-child { border-bottom: none; }
 .row:hover, .row:active { background: var(--row-hover); }
 .row .name {
@@ -439,7 +476,8 @@ input[type="search"]:focus {
   flex-shrink: 0;
 }
 @media (max-width: 380px) {
-  .row { grid-template-columns: 1fr; }
+  /* .row used to collapse to one column here; the row now stacks its controls in a
+     44px side column precisely so the text keeps its width on phones. */
   .row .postal { grid-column: 1 / -1; text-align: left; margin-top: 1px; }
 }
 .row .tags {
@@ -510,7 +548,7 @@ footer a { color: var(--text-muted); }
 <div class="wrap">
   <header>
     <h1>DBS PayLah! Saturdays — Merchant Search</h1>
-    <p class="sub">Search by name, postal code, address, area or nearest MRT. <strong>Every Saturday to 19 Dec 2026</strong> — 100% cashback, capped at S$3.</p>
+    <p class="sub">Search by name, postal code, address, area or nearest MRT. <strong>Every Saturday to 19 Dec 2026</strong> — 100% cashback, capped at S$3. <a href="paylah-saturdays.ics" download>Add to calendar</a> · Parsed from <a href="https://www.dbs.com.sg/iwov-resources/media/pdf/deposits/promotions/paylah/saturdays/dbs-paylah-saturdays-participating-merchants.pdf" target="_blank" rel="noopener">DBS's published PDF</a> — check the current version.</p>
   </header>
 
   <main>
@@ -548,6 +586,7 @@ footer a { color: var(--text-muted); }
     <span id="count" aria-live="polite" aria-atomic="true"></span>
     <button type="button" id="cleartext" hidden>Clear</button>
   </div>
+  <div id="updatehint" hidden>Updated — <button type="button" id="updatereload">reload</button> for the latest data.</div>
   <h2 class="sr-only">Search results</h2>
   <div id="results"></div>
   </main>
@@ -707,6 +746,18 @@ const CATEGORIES = [...new Set(DATA.map(r => r[5]))].sort();
 let activeCategory = null;
 let currentMatches = [];
 let renderLimit = 100;
+
+// B2: favourites, per device. Storage can throw (private mode) or be absent; if it does,
+// the feature disappears entirely rather than half-working.
+const FAV_KEY = 'paylah.favs.v1';
+let favs = new Set(), favsAvailable = false, favOnly = false;
+try {
+  const rawFavs = localStorage.getItem(FAV_KEY);
+  favs = new Set(rawFavs ? JSON.parse(rawFavs) : []);
+  favsAvailable = true;
+} catch { favsAvailable = false; }
+const favKey = r => `${r[0]}|${r[1]}|${r[2]}|${r[3]}`;   // source postal: stable across corrections
+function saveFavs() { try { localStorage.setItem(FAV_KEY, JSON.stringify([...favs])); } catch {} }
 const PAGE = 100;
 
 const filtersEl = document.getElementById('filters');
@@ -718,6 +769,7 @@ CATEGORIES.forEach(cat => {
   chip.className = 'chip';
   chip.textContent = cat;
   chip.setAttribute('aria-pressed', 'false');
+  chip.dataset.cat = cat;               // A1: lets the URL loader find the chip by value
   chip.addEventListener('click', () => {
     activeCategory = (activeCategory === cat) ? null : cat;
     document.querySelectorAll('.chip').forEach(c => {
@@ -734,6 +786,29 @@ CATEGORIES.forEach(cat => {
   });
   filtersEl.appendChild(chip);
 });
+
+// B2: "My stalls" chip, present only when there is something to show.
+const favChip = document.createElement('button');
+favChip.type = 'button';
+favChip.className = 'chip chip-fav';
+favChip.textContent = 'My stalls';
+favChip.title = 'Saved on this device only';
+favChip.setAttribute('aria-pressed', 'false');
+favChip.hidden = true;
+favChip.addEventListener('click', () => toggleFavOnly(!favOnly));
+filtersEl.appendChild(favChip);
+function toggleFavOnly(on) {
+  favOnly = !!on && favs.size > 0;
+  favChip.classList.toggle('active', favOnly);
+  favChip.setAttribute('aria-pressed', String(favOnly));
+  renderLimit = PAGE;
+  doSearch();
+}
+function updateFavChip() {
+  favChip.hidden = !(favsAvailable && favs.size > 0);
+  if (favChip.hidden && favOnly) toggleFavOnly(false);
+}
+updateFavChip();
 
 const qEl = document.getElementById('q');
 const resultsEl = document.getElementById('results');
@@ -826,30 +901,28 @@ function buildSuggestions(raw) {
       });
     }
   } else {
-    // MRT / LRT stations
-    MRT_LIST.filter(m => m.toLowerCase().includes(q)).slice(0, 4).forEach(m => {
-      out.push({ type: 'mrt', label: m, sub: 'MRT/LRT', value: m });
-    });
-    // Neighbourhoods / localities (derived from address data)
-    const hoodStarts = NEIGHBOURHOOD_LIST.filter(n => n.toLowerCase().startsWith(q));
-    const hoodContains = NEIGHBOURHOOD_LIST.filter(n => !n.toLowerCase().startsWith(q) && n.toLowerCase().includes(q));
-    [...hoodStarts, ...hoodContains].slice(0, 4).forEach(n => {
-      out.push({ type: 'hood', label: titleCase(n), sub: 'Neighbourhood', value: titleCase(n) });
-    });
-    // Areas
-    AREA_SET.filter(a => a.toLowerCase().includes(q)).slice(0, 4).forEach(a => {
-      out.push({ type: 'area', label: a, sub: 'Area', value: a });
-    });
-    // Categories / services
-    CATEGORIES.filter(c => c.toLowerCase().includes(q)).slice(0, 4).forEach(c => {
-      out.push({ type: 'service', label: c, sub: 'Category', value: c });
-    });
-    // Merchant names
+    // A4: merchant names FIRST. The old order put up to 16 place/station items ahead of
+    // names under a 12-item cap, so typing a stall's name could show no stall at all.
     const nameStarts = NAME_LIST.filter(n => n.toLowerCase().startsWith(q));
     const nameContains = NAME_LIST.filter(n => !n.toLowerCase().startsWith(q) && n.toLowerCase().includes(q));
-    [...nameStarts, ...nameContains].slice(0, 8).forEach(n => {
+    [...nameStarts, ...nameContains].slice(0, 6).forEach(n => {
       const row = NAME_MAP.get(n);
-      out.push({ type: 'name', label: n, sub: row[4] || row[5], value: n });
+      out.push({ type: 'name', label: n, sub: areaFor(row[3], row[4]) || row[5], value: n });
+    });
+    // Stations
+    MRT_LIST.filter(m => m.toLowerCase().includes(q)).slice(0, 3).forEach(m => {
+      out.push({ type: 'mrt', label: m, sub: 'MRT/LRT', value: m });
+    });
+    // Places: planning areas and address-derived neighbourhoods, merged under one badge
+    const hoodStarts = NEIGHBOURHOOD_LIST.filter(n => n.toLowerCase().startsWith(q)).map(titleCase);
+    const hoodContains = NEIGHBOURHOOD_LIST.filter(n => !n.toLowerCase().startsWith(q) && n.toLowerCase().includes(q)).map(titleCase);
+    const areas = AREA_SET.filter(a => a.toLowerCase().includes(q));
+    [...new Set([...areas, ...hoodStarts, ...hoodContains])].slice(0, 3).forEach(pl => {
+      out.push({ type: 'area', label: pl, sub: 'Place', value: pl });
+    });
+    // Categories
+    CATEGORIES.filter(c => c.toLowerCase().includes(q)).slice(0, 2).forEach(c => {
+      out.push({ type: 'service', label: c, sub: 'Category', value: c });
     });
   }
 
@@ -876,7 +949,7 @@ function renderSuggestions(list) {
   }
   suggEl.innerHTML = list.map((s, i) => {
     const tagClass = { postal: 'tag-postal', area: 'tag-area', service: 'tag-service', name: 'tag-name', mrt: 'tag-mrt', hood: 'tag-hood' }[s.type];
-    const tagLabel = { postal: 'Postal', area: 'Area', service: 'Service', name: 'Merchant', mrt: 'MRT/LRT', hood: 'Neighbourhood' }[s.type];
+    const tagLabel = { postal: 'Postal', area: 'Place', hood: 'Place', service: 'Category', name: 'Merchant', mrt: 'Station' }[s.type];
     return `
       <div class="sugg-item" role="option" id="sugg-${i}" aria-selected="false" data-idx="${i}">
         <div class="sugg-text">
@@ -934,6 +1007,7 @@ function doSearch() {
 
   let matches = DATA;
   if (activeCategory) matches = matches.filter(r => r[5] === activeCategory);
+  if (favOnly) matches = matches.filter(r => favs.has(favKey(r)));
   if (terms.length) {
     matches = matches.filter(r => {
       const hay = HAY.get(r);
@@ -975,6 +1049,7 @@ function doSearch() {
   countEl.textContent = matches.length.toLocaleString() + (matches.length === DATA.length ? ' total entries' : ' matches');
 
   render(matches);
+  syncUrl();
 }
 
 function render(matches) {
@@ -985,31 +1060,50 @@ function render(matches) {
   }
   const shown = matches.slice(0, renderLimit);
   const frag = document.createDocumentFragment();
-  shown.forEach(r => {
+  shown.forEach((r, i) => {
     const [name, addr, unit, postal, area, cat] = r;
     const row = document.createElement('div');
     row.className = 'row';
+    row.dataset.idx = String(i);          // index into currentMatches, for the delegated handler
     const addrLine = [addr, unit].filter(Boolean).join(', ');
     const nearestMrt = nearestFor(postal);
-    const c = nearPoint ? coordsFor(postal) : null;
-    const awayTag = c
-      ? `<span class="tag tag-dist">${fmtDist(haversine(nearPoint.lat, nearPoint.lon, c.lat, c.lon))} away</span>`
+    const c = coordsFor(postal);
+    const postalShown = displayPostal(postal);
+    // A7: the 22 rows whose source postal code does not exist are shown corrected; say so.
+    const corrected = (POSTAL[postal] && POSTAL[postal][7])
+      ? ` <sup class="corrected" title="This postal code does not exist in DBS's PDF; corrected from the address">corrected</sup>`
       : '';
+    const stationTag = m => {
+      const title = lineNames(m.lines);
+      return `<span class="tag tag-mrt-row"${title ? ` title="${escapeHtml(m.name)} — ${escapeHtml(title)}"` : ''}>`
+        + lineDots(m.lines) + `${escapeHtml(m.name)} ${fmtDist(m.d)}</span>`;
+    };
+    // A5: one primary tag in the default view. In Near Me that is the distance; otherwise
+    // the nearest station. Everything else moves into the expandable strip.
+    const inNear = !!(nearPoint && c);
+    const primary = inNear
+      ? `<span class="tag tag-dist">${fmtDist(haversine(nearPoint.lat, nearPoint.lon, c.lat, c.lon))} away</span>`
+      : (nearestMrt[0] ? stationTag(nearestMrt[0]) : '');
+    const strip = [
+      inNear && nearestMrt[0] ? stationTag(nearestMrt[0]) : '',
+      nearestMrt[1] ? stationTag(nearestMrt[1]) : '',
+      c ? `<a class="act" href="https://www.google.com/maps/search/?api=1&query=${c.lat},${c.lon}" target="_blank" rel="noopener">Open in Maps</a>` : '',
+      `<button type="button" class="act share">Share</button>`
+    ].join('');
+    const areaName = areaFor(postal, area);
+    // Controls sit in ONE right-hand column, stacked. Two side columns at 44px each left
+    // ~239px for text on a 375px phone and every line wrapped; one column leaves ~291px.
     row.innerHTML = `
-      <div class="name">${escapeHtml(name)}</div>
-      <div class="addr">${escapeHtml(addrLine)}</div>
-      <div class="postal">S${escapeHtml(displayPostal(postal))}</div>
-      <div class="tags">
-        ${awayTag}
-        <span class="tag">${escapeHtml(cat)}</span>
-        ${(() => { const a = areaFor(postal, area); return a ? `<span class="tag">${escapeHtml(a)}</span>` : ''; })()}
-        ${nearestMrt.map(m => {
-          const title = lineNames(m.lines);
-          return `<span class="tag tag-mrt-row"${title ? ` title="${escapeHtml(m.name)} — ${escapeHtml(title)}"` : ''}>`
-            + lineDots(m.lines)
-            + `${escapeHtml(m.name)} ${fmtDist(m.d)}</span>`;
-        }).join('')}
+      <div class="main">
+        <div class="name">${escapeHtml(name)}</div>
+        <div class="addr">${escapeHtml(addrLine)}${addrLine ? ' · ' : ''}S${escapeHtml(postalShown)}${corrected}</div>
+        <div class="meta">${primary}<span class="muted">${escapeHtml(cat)}${areaName ? ' · ' + escapeHtml(areaName) : ''}</span></div>
       </div>
+      <div class="ctrls">
+        ${favsAvailable ? `<button type="button" class="star" aria-pressed="${favs.has(favKey(r))}" aria-label="Save ${escapeHtml(name)}"></button>` : ''}
+        <button type="button" class="more" aria-expanded="false" aria-label="More for ${escapeHtml(name)}">···</button>
+      </div>
+      <div class="strip" hidden>${strip}</div>
     `;
     frag.appendChild(row);
   });
@@ -1023,6 +1117,45 @@ function render(matches) {
     resultsEl.appendChild(btn);
   }
 }
+
+// A2/B2: one delegated listener for the per-row controls rather than a listener per row.
+resultsEl.classList.toggle('nostar', !favsAvailable);
+resultsEl.addEventListener('click', async (e) => {
+  const row = e.target.closest('.row');
+  if (!row) return;
+  const r = currentMatches[+row.dataset.idx];
+  if (!r) return;
+
+  const more = e.target.closest('.more');
+  if (more) {
+    const strip = row.querySelector('.strip');
+    strip.hidden = !strip.hidden;
+    more.setAttribute('aria-expanded', String(!strip.hidden));
+    return;
+  }
+  const star = e.target.closest('.star');
+  if (star) {
+    const k = favKey(r);
+    if (favs.has(k)) favs.delete(k); else favs.add(k);
+    saveFavs();
+    star.setAttribute('aria-pressed', String(favs.has(k)));
+    updateFavChip();
+    if (favOnly) doSearch();            // un-starring inside "My stalls" removes the row
+    return;
+  }
+  const share = e.target.closest('.share');
+  if (share) {
+    const url = location.origin + location.pathname + '?q=' + encodeURIComponent(displayPostal(r[3]));
+    const text = `${r[0]} — ${[r[1], r[2]].filter(Boolean).join(', ')} (S${displayPostal(r[3])}). On the PayLah! Saturdays list.`;
+    if (navigator.share) {              // native sheet on phones; a dismissed sheet is not an error
+      try { await navigator.share({ title: r[0], text, url }); } catch {}
+      return;
+    }
+    try { await navigator.clipboard.writeText(url); share.textContent = 'Copied'; }
+    catch { share.textContent = 'Copy failed'; }
+    setTimeout(() => { share.textContent = 'Share'; }, 2000);
+  }
+});
 
 let debounceTimer;
 qEl.addEventListener('input', () => {
@@ -1337,8 +1470,71 @@ if (window.matchMedia('(min-width: 768px)').matches) {
 // Allow ?q=<term> to pre-fill the search, so a filtered view can be shared as a link
 // (e.g. .../?q=tampines). This is also what the SearchAction in the structured data
 // points at -- the markup describes a search entry point that genuinely works.
-const initialQuery = new URLSearchParams(location.search).get('q');
+// A1: every view is addressable. syncUrl() runs at the end of doSearch and mirrors the
+// state into the query string with replaceState (not pushState -- typing must not spam
+// history). The loader below is the inverse.
+function syncUrl() {
+  const p = new URLSearchParams();
+  const raw = qEl.value.trim();
+  if (raw) p.set('q', raw);
+  if (activeCategory) p.set('cat', activeCategory);
+  if (favOnly) p.set('fav', '1');
+  if (nearPoint) {
+    p.set('near', nearPoint.label === 'your location' ? 'me' : nearPoint.label.replace(/^S/, ''));
+    if (nearRadiusIdx) p.set('r', String(nearRadiusIdx));
+  }
+  const qs = p.toString();
+  try { history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '') + location.hash); } catch {}
+}
+
+const params = new URLSearchParams(location.search);
+const initialQuery = params.get('q');
 if (initialQuery) qEl.value = initialQuery;
+const initialCat = params.get('cat');
+if (initialCat) {
+  const chip = [...document.querySelectorAll('.chip')].find(c => c.dataset.cat === initialCat);
+  if (chip) chip.click();                // reuses the chip's own handler
+}
+if (params.get('fav') === '1' && favsAvailable) toggleFavOnly(true);
+const initialNear = params.get('near');
+if (initialNear === 'me') {
+  // Never request geolocation on load -- a permission prompt before the page has said
+  // anything is hostile. Tell the person what the link was, and let them choose.
+  setBanner('This link was shared with <strong>Near me</strong> on. Tap <strong>Near me</strong> to rank by your location.');
+} else if (/^\d{6}$/.test(initialNear || '')) {
+  const c = coordsFor(initialNear);
+  if (c) {
+    enterNearMode(c.lat, c.lon, 'S' + initialNear);
+    const ri = Math.min(Math.max(parseInt(params.get('r') || '0', 10) || 0, 0), NEAR_RADII.length - 1);
+    if (ri) { nearRadiusIdx = ri; doSearch(); }
+  } else {
+    // A postal code that is not in the embedded data (typically someone's home) would
+    // need a OneMap call to resolve, and this page never makes network requests on load.
+    // Don't drop the link silently: pre-fill the box and let the person press Go.
+    nearPostalEl.value = initialNear;
+    setBanner(`This link was shared for postal code <strong>S${escapeHtml(initialNear)}</strong>. Tap <strong>Go</strong> to rank merchants near it.`);
+  }
+}
+
+// B1: service worker for instant, offline-capable repeat visits. https only -- the
+// local dev server and file:// have nothing to gain and would just cache stale copies.
+function showUpdateHint() {
+  const h = document.getElementById('updatehint');
+  h.hidden = false;
+  document.getElementById('updatereload').addEventListener('click', () => location.reload(), { once: true });
+}
+if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  navigator.serviceWorker.register('sw.js').then(reg => {
+    reg.addEventListener('updatefound', () => {
+      const nw = reg.installing;
+      if (!nw) return;
+      nw.addEventListener('statechange', () => {
+        // A new worker installed while an old one controls the page = a deploy landed.
+        if (nw.state === 'installed' && navigator.serviceWorker.controller) showUpdateHint();
+      });
+    });
+  }).catch(() => {});
+}
 
 doSearch();
 })();

@@ -260,6 +260,7 @@ allowlist, one origin per feature:
 | `www.onemap.gov.sg` | Postal lookup for the Near Me fallback |
 | `*.googletagmanager.com` | Google Analytics loader |
 | `*.google-analytics.com`, `*.analytics.google.com` | GA4 measurement calls |
+| `'self'` (`worker-src`) | The service worker (`sw.js`) — instant, offline-capable repeat visits |
 
 **If you add any third-party script, add its origin to the CSP or it will fail
 silently** — blocked, with no visible error on the page. Equally, if you remove a

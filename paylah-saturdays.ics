@@ -1,0 +1,28 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//paylah-saturdays//Merchant Search//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VTIMEZONE
+TZID:Asia/Singapore
+BEGIN:STANDARD
+DTSTART:19820101T000000
+TZOFFSETFROM:+0800
+TZOFFSETTO:+0800
+TZNAME:+08
+END:STANDARD
+END:VTIMEZONE
+BEGIN:VEVENT
+UID:paylah-saturdays-2026@forkymadspoon.github.io
+DTSTAMP:20260918T000000Z
+DTSTART;TZID=Asia/Singapore:20260919T060000
+DTEND;TZID=Asia/Singapore:20260919T090000
+RRULE:FREQ=WEEKLY;BYDAY=SA;UNTIL=20261219T155959Z
+SUMMARY:PayLah! Saturday — S$3 cashback
+DESCRIPTION:100% cashback capped at S$3 at participating heartland shops\,
+ hawker stalls\, wet markets and coffeeshops. First 160\,000 redemptions
+ each week from 6am. Find a merchant near you:
+ https://forkymadspoon.github.io/paylah-saturdays/
+URL:https://forkymadspoon.github.io/paylah-saturdays/
+END:VEVENT
+END:VCALENDAR
