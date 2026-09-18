@@ -89,6 +89,7 @@
   --accent: #d0021b;
   --accent-fg: #ffffff;
   --row-hover: #f2f2f4;
+  --mrt: #92400e;        /* amber dark enough for 4.5:1 on the tag's tinted background */
   --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
 }
 @media (prefers-color-scheme: dark) {
@@ -101,6 +102,7 @@
     --accent: #ff4d5e;
     --accent-fg: #15151a;
     --row-hover: #23232b;
+  --mrt: #f59e0b;        /* lighter amber: dark mode needs the opposite direction */
   }
 }
 :root[data-theme="dark"] {
@@ -112,19 +114,94 @@
   --accent: #ff4d5e;
   --accent-fg: #15151a;
   --row-hover: #23232b;
+  --mrt: #f59e0b;        /* lighter amber: dark mode needs the opposite direction */
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+/* Visible keyboard focus. The search input sets outline:none and previously replaced it
+   with only a border-colour change, which is a colour-only cue and invisible on buttons.
+   :focus-visible rather than :focus, so a mouse click does not leave a ring behind. */
+:where(a, button, input, [tabindex]):focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* The [hidden] attribute only hides an element when nothing overrides `display`. Any rule
+   setting display (flex, inline-flex, block) silently beats the UA default and the element
+   stays on screen -- which is how an empty #nearbanner strip shipped, and how #maptoggle
+   briefly reappeared once .nearby-btn gained display:inline-flex. A single global guard
+   fixes the whole class of bug rather than one element at a time. */
+[hidden] { display: none !important; }
+
+/* Placeholder text needs the same 4.5:1 as body text; the browser default was 4.3:1 in
+   light mode and 3.64:1 in dark. */
+::placeholder { color: var(--text-muted); opacity: 1; }
+
+/* Honour a reduced-motion preference. The page has no CSS transitions of its own, but the
+   map pans and zooms; drawMap() also checks this and disables Leaflet's animation. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Progressive disclosure for the data caveats. They matter, but on a 375px phone the
+   original two paragraphs pushed the search box 38% down the first screen, leaving under
+   two results visible. The text stays in the DOM (crawlable, and the page's SEO depends
+   on it) and opens by default on wider screens where the space is not contested. */
+.about {
+  margin: 4px 0 14px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+}
+.about summary {
+  cursor: pointer;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+  font-weight: 600;
+  touch-action: manipulation;
+}
+/* display:flex removes the native disclosure triangle, which left this looking like plain
+   text with no sign it could be opened. Supply an explicit chevron that rotates on open. */
+.about summary::-webkit-details-marker { display: none; }
+.about summary::before {
+  content: "";
+  width: 7px; height: 7px;
+  border-right: 2px solid var(--text-muted);
+  border-bottom: 2px solid var(--text-muted);
+  transform: rotate(-45deg);
+  transition: transform 150ms ease;
+  flex: none;
+}
+.about[open] summary::before { transform: rotate(45deg); }
+.about p { margin: 6px 0 0; }
+.about[open] { padding-bottom: 4px; }
+@media (min-width: 768px) { .about { font-size: 0.82rem; } }
+
 /* "Near Me" controls, distance badges and the map panel. */
 .nearby-row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin: 10px 0 4px; }
 .nearby-btn {
-  font: inherit; cursor: pointer; padding: 9px 14px; border-radius: 999px;
+  font: inherit; cursor: pointer; padding: 10px 16px; border-radius: 999px;
+  min-height: 44px;         /* Apple HIG / WCAG 2.5.8 minimum target */
+  display: inline-flex; align-items: center;
   border: 1px solid var(--border); background: var(--bg-elevated); color: var(--text);
+  touch-action: manipulation;
 }
 .nearby-btn.active { background: var(--accent); color: var(--accent-fg); border-color: transparent; font-weight: 600; }
 .nearby-btn:disabled { opacity: .55; cursor: default; }
 .nearby-row input {
-  font: inherit; width: 132px; padding: 9px 11px; border-radius: 999px;
+  font: inherit; width: 132px; padding: 10px 14px; border-radius: 999px;
+  min-height: 44px;
   border: 1px solid var(--border); background: var(--bg); color: var(--text);
 }
 #nearbanner {
@@ -277,19 +354,20 @@ input[type="search"]:focus {
 .filters {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;                 /* minimum spacing between adjacent touch targets */
   margin-bottom: 14px;
 }
 .chip {
-  padding: 8px 14px;
-  min-height: 34px;
+  font: inherit;            /* chips are <button> now, so reset the UA font */
+  padding: 8px 16px;
+  min-height: 44px;         /* Apple HIG / WCAG 2.5.8 minimum target */
   display: inline-flex;
   align-items: center;
   border-radius: 999px;
   border: 1px solid var(--border);
   background: var(--bg-elevated);
   color: var(--text-muted);
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   cursor: pointer;
   user-select: none;
   white-space: nowrap;
@@ -310,10 +388,16 @@ input[type="search"]:focus {
   color: var(--text-muted);
 }
 #cleartext {
-  padding: 6px 4px;
-  min-height: 32px;
+  font: inherit;            /* <button> now: reset UA font/background/border */
+  background: none;
+  border: 0;
+  color: inherit;
+  padding: 6px 8px;
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
+  cursor: pointer;
+  text-decoration: underline;
   touch-action: manipulation;
 }
 #results {
@@ -366,16 +450,19 @@ input[type="search"]:focus {
   flex-wrap: wrap;
 }
 .tag {
-  font-size: 0.68rem;
-  padding: 2px 7px;
+  font-size: 0.75rem;       /* 12px floor; 0.68rem rendered at 10.9px */
+  padding: 3px 8px;
   border-radius: 6px;
   background: var(--bg-elevated);
   color: var(--text-muted);
   border: 1px solid var(--border);
 }
 .tag.tag-mrt-row {
+  /* #d97706 measured 2.81:1 on its own tinted background in light mode and 4.48:1 in
+     dark -- both under 4.5:1. Themed token instead: darker amber on light, lighter on
+     dark, since contrast has to move in opposite directions per theme. */
   background: rgba(217, 119, 6, 0.12);
-  color: #d97706;
+  color: var(--mrt);
   border-color: rgba(217, 119, 6, 0.35);
 }
 .empty {
@@ -400,7 +487,7 @@ input[type="search"]:focus {
 }
 footer {
   margin-top: 22px;
-  font-size: 0.72rem;
+  font-size: 0.8rem;        /* was 0.72rem = 11.5px */
   color: var(--text-muted);
   line-height: 1.5;
 }
@@ -411,12 +498,13 @@ footer a { color: var(--text-muted); }
 <div class="wrap">
   <header>
     <h1>DBS PayLah! Saturdays — Merchant Search</h1>
-    <p class="sub">Search the participating-merchant list by name, postal code, address, area, MRT, or neighbourhood. Extracted from DBS's published PDF — verify any single result against the source document before relying on it, especially for stalls inside hawker centres and wet markets (see note below).</p>
-    <p class="sub">Campaign runs every Saturday from 29 August to 19 December 2026, 100% cashback (capped at S$3), first 160,000 redemptions each week from 6am. See DBS's <a href="https://www.dbs.com.sg/personal/promotion/paylah-saturdays" target="_blank" rel="noopener">official PayLah! Saturdays promotion page</a> for full terms.</p>
+    <p class="sub">Search by name, postal code, address, area or nearest MRT. <strong>Every Saturday to 19 Dec 2026</strong> — 100% cashback, capped at S$3.</p>
   </header>
 
+  <main>
   <div class="search-row">
     <div class="search-wrap">
+      <label class="sr-only" for="q">Search merchants by name, postal code, address, area or MRT station</label>
       <input type="search" id="q" placeholder="Search name, postal code, area, MRT, neighbourhood…" autofocus autocomplete="off">
       <div id="suggestions"></div>
     </div>
@@ -425,18 +513,26 @@ footer a { color: var(--text-muted); }
   <div class="nearby-row">
     <button type="button" class="nearby-btn" id="nearme">Near me</button>
     <span style="color:var(--text-muted);font-size:13px">or</span>
-    <input type="text" id="nearpostal" inputmode="numeric" maxlength="6" placeholder="Postal code" aria-label="Find merchants near a postal code" autocomplete="off">
+    <label class="sr-only" for="nearpostal">Find merchants near a postal code</label>
+    <input type="text" id="nearpostal" inputmode="numeric" maxlength="6" placeholder="Postal code" autocomplete="off">
     <button type="button" class="nearby-btn" id="nearpostalgo">Go</button>
     <button type="button" class="nearby-btn" id="maptoggle" hidden>Show map</button>
   </div>
   <div id="nearbanner" hidden></div>
   <div id="map" hidden></div>
+
+  <details class="about" id="about">
+    <summary>About this data</summary>
+    <p>Extracted from DBS's published PDF — verify any single result against the source document before relying on it, especially for stalls inside hawker centres and wet markets.</p>
+    <p>Campaign runs every Saturday from 29 August to 19 December 2026, 100% cashback (capped at S$3), first 160,000 redemptions each week from 6am. See DBS's <a href="https://www.dbs.com.sg/personal/promotion/paylah-saturdays" target="_blank" rel="noopener">official PayLah! Saturdays promotion page</a> for full terms.</p>
+  </details>
   <div class="meta-row">
-    <span id="count"></span>
-    <span id="cleartext" style="cursor:pointer; display:none;" onclick="clearAll()">Clear</span>
+    <span id="count" aria-live="polite" aria-atomic="true"></span>
+    <button type="button" id="cleartext" style="display:none;">Clear</button>
   </div>
   <h2 class="sr-only">Search results</h2>
   <div id="results"></div>
+  </main>
 
   <footer>
     <h2 class="sr-only">About this list and its data sources</h2>
@@ -559,16 +655,27 @@ const PAGE = 100;
 
 const filtersEl = document.getElementById('filters');
 CATEGORIES.forEach(cat => {
-  const chip = document.createElement('div');
+  // A real <button>, not a styled <div>: that is what makes these reachable by Tab and
+  // operable with Enter/Space, and gives screen readers the right role for free.
+  const chip = document.createElement('button');
+  chip.type = 'button';
   chip.className = 'chip';
   chip.textContent = cat;
-  chip.onclick = () => {
+  chip.setAttribute('aria-pressed', 'false');
+  chip.addEventListener('click', () => {
     activeCategory = (activeCategory === cat) ? null : cat;
-    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-    if (activeCategory) chip.classList.add('active');
+    document.querySelectorAll('.chip').forEach(c => {
+      c.classList.remove('active');
+      c.setAttribute('aria-pressed', 'false');
+    });
+    if (activeCategory) {
+      chip.classList.add('active');
+      // Announce the filter state instead of signalling it by colour alone.
+      chip.setAttribute('aria-pressed', 'true');
+    }
     renderLimit = PAGE;
     doSearch();
-  };
+  });
   filtersEl.appendChild(chip);
 });
 
@@ -576,6 +683,7 @@ const qEl = document.getElementById('q');
 const resultsEl = document.getElementById('results');
 const countEl = document.getElementById('count');
 const clearEl = document.getElementById('cleartext');
+clearEl.addEventListener('click', clearAll);
 const suggEl = document.getElementById('suggestions');
 
 // Build lookup indexes once for fast, live suggestions.
@@ -1059,7 +1167,8 @@ function loadLeaflet() {
 function drawMap() {
   if (!window.L || !nearPoint) return;
   if (!map) {
-    map = L.map('map', { scrollWheelZoom: false });
+    const calmMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    map = L.map('map', { scrollWheelZoom: false, zoomAnimation: !calmMotion, fadeAnimation: !calmMotion });
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -1107,6 +1216,12 @@ mapToggle.addEventListener('click', async () => {
     mapToggle.disabled = false;
   }
 });
+
+// Open the data notes by default on wider screens, collapsed on phones. Done in JS rather
+// than CSS because <details> open state is an attribute, not a style.
+if (window.matchMedia('(min-width: 768px)').matches) {
+  document.getElementById('about').open = true;
+}
 
 // Allow ?q=<term> to pre-fill the search, so a filtered view can be shared as a link
 // (e.g. .../?q=tampines). This is also what the SearchAction in the structured data
