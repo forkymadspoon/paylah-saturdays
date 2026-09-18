@@ -16,12 +16,15 @@ for the full terms.
 
 - **Search** across merchant name, address, unit, postal code, planning area, category
   and nearest MRT station.
-- **Per-merchant nearest MRT/LRT**, with distances (`Simei 350m`), computed from the
+- **Per-merchant nearest MRT/LRT**, with distances (`Simei 350m`) and a dot in each
+  line's official colour — interchanges show one dot per line — computed from the
   merchant's own geocoded position rather than a broad area label.
 - **Near Me** — ranks merchants by distance from your device location, or from a postal
-  code you type if you'd rather not share it.
+  code you type if you'd rather not share it. Refuses a fix outside Singapore instead of
+  ranking against a list 10,000 km away.
 - **Map view** — Leaflet + OpenStreetMap, lazy-loaded only when opened.
 - **Category filters** and a deep-linkable search (`?q=tampines`).
+- **Keyboard and screen-reader usable** end to end — see *Accessibility* below.
 
 ## The data
 
@@ -77,6 +80,14 @@ One self-contained `index.html` — no build step for the page itself, no framew
 dependencies at runtime except Leaflet, which loads from a CDN only if you open the map.
 Merchant data and geo lookups are inlined, so the page is a single 1.8MB file that
 compresses to ~250KB and loads in under 100ms.
+
+The whole script is one IIFE — nothing is attached to `window`, so it cannot collide with
+the analytics loader or anything added later. The per-row search string is built once,
+after the sort, rather than re-concatenated on every keystroke. A `<noscript>` block links
+to DBS's PDF and promotion page, because a page whose data lives inside its script has no
+other fallback if that script fails to parse; to keep the parse surface old-browser-safe
+there is no optional chaining, and the only post-2018 syntax is the `\p{L}` Unicode regex
+in the sort comparator.
 
 Each merchant row is a fixed six-element array:
 
@@ -137,6 +148,35 @@ There is deliberately **no spatial index**. A linear scan over 15k points costs 
 geohash or k-d tree would optimise something that isn't slow. Run
 `node tools/density-analysis.js` to reproduce those measurements.
 
+Robustness, all verified by driving the real UI with stubbed geolocation and a held
+`fetch`: a fix outside Singapore's bounding box is refused with a message; a postal code
+lookup that is not embedded calls OneMap with an 8-second timeout (a manual
+`AbortController`, since `AbortSignal.timeout` is too new for older engines); the interim
+banner carries a **Cancel**, because Go is disabled while a lookup is in flight and a hung
+request must not leave the user with nothing to press; and a per-request generation
+counter makes a reply that arrives after Clear, Cancel or a newer lookup inert, so a slow
+network can never flip the page into Near Me after the user has left it.
+
+## Accessibility
+
+Measured, not assumed — every claim below was checked in-browser at 1280px and 375px in
+both themes.
+
+- Category chips and Clear are real `<button>`s with `aria-pressed`, so they are in the
+  tab order and operable with Enter/Space. They used to be `<div onclick>` and were
+  unreachable by keyboard.
+- Both inputs have `<label>`s; the result count is an `aria-live="polite"` region; the
+  page has a `<main>` landmark.
+- The suggestions dropdown is a `combobox` → `listbox` of `option`s: `aria-expanded`,
+  `aria-controls` and `aria-activedescendant` follow the arrow keys, and Escape resets.
+- A `:focus-visible` ring replaces the previous border-colour-only cue.
+- Every interactive target is ≥44px with ≥8px gaps; body-adjacent text is ≥12px.
+- Every text/background pair is ≥4.5:1 in light and dark. The MRT line colour is carried
+  by a dot, not the text, because the official palette cannot meet text contrast (Circle
+  amber measures 1.86:1 on a light surface); each dot has a ring so its edge stays visible
+  where the fill is close to the surface.
+- `prefers-reduced-motion` is honoured, including Leaflet's pan/zoom animation.
+
 ## Repo contents
 
 | File | Purpose |
@@ -167,7 +207,9 @@ Singapore. `tools/geocode-fallback.js` then retries those by address, accepting 
 only when the block number *and* road name both match — OneMap answers a fuzzy address
 query with something nearby rather than nothing, and an unverified match would put
 merchants on the wrong street. It rescued 22 of 48; results merge into
-`postal-to-latlong.json`, and the rest are explained in `tools/postal-unresolved.json`. `tools/assign-areas.js` needs the planning-area GeoJSON, which is gitignored
+`postal-to-latlong.json`, and the rest are explained in `tools/postal-unresolved.json`.
+
+`tools/assign-areas.js` needs the planning-area GeoJSON, which is gitignored
 because of its size — re-download it from
 [data.gov.sg](https://data.gov.sg/datasets/d_4765db0e87b9c86336792efe8a1f7a66/view)
 to `tools/planning-areas.geojson`.
@@ -237,15 +279,38 @@ the experience for people who search rather than scroll.
 Google Analytics 4 (property `G-ZK37J9VYWP`) is installed near the bottom of
 `index.html`. It is configured with `page_location` set to the path only, so a `?q=`
 query — which can hold a typed postal code — never reaches Google. GA4 sets cookies and
-collects visitor data, and there is currently **no consent banner**.
+collects visitor data, and there is currently **no consent banner**. That is generally
+acceptable under Singapore's PDPA for basic analytics, but GDPR expects consent before
+analytics cookies for EU visitors — worth addressing with Google Consent Mode or a
+cookieless alternative if that audience matters.
 
-Location handling: a device fix from "Near me" is used only in the browser. Two things do
-leave the device, and the page says so at the point they happen: a postal code that is not
-in the embedded data is looked up via OneMap, and the map fetches tiles from OpenStreetMap,
-whose servers see the map area being viewed. Fixes outside Singapore are refused with a
-message rather than ranked against a list 10,000 km away. That is generally acceptable under Singapore's PDPA for basic
-analytics, but GDPR expects consent before analytics cookies for EU visitors — worth
-addressing with Google Consent Mode or a cookieless alternative if that audience matters.
+**Location handling.** A device fix from "Near me" is used only in the browser and is
+never sent anywhere. Two things do leave the device, and the page says so at the point
+they happen: a postal code that is *not* in the embedded data is looked up via OneMap
+(most are embedded, so most lookups never touch the network), and the map fetches tiles
+from OpenStreetMap, whose servers see the map area being viewed. Fixes outside Singapore
+are refused with a message rather than ranked against a list 10,000 km away.
+
+## Open decisions
+
+A pre-production review (Sep 2026) left these deliberately unresolved — they are judgment
+calls, not code changes, and are recorded here so they are not lost in git history:
+
+- **22 corrected postal codes** are shown in place of what DBS published, with no on-row
+  marker. Each was verified by exact block and road match (`tools/postal-rescued.json`),
+  but a wrong correction would relocate a merchant silently.
+- **The page publishes data DBS never did** — per-postal coordinates, planning areas,
+  nearest-station distances. Derived from public sources and non-personal, but strictly
+  more than the PDF, under DBS's name.
+- **Sole-proprietor names.** A scan of all rows found no phone numbers, NRIC/FIN, emails or
+  patronymics, but a stall registered under an individual's name is indistinguishable from
+  a brand by regex. DBS published the same names.
+- **OneMap's search endpoint replies "Authentication token missing" while still serving.**
+  The pipeline and the Near Me fallback both depend on it; registering a free token before
+  it closes is cheap insurance.
+- **Reproducing the full list** likely sits outside DBS's site terms and may engage
+  compilation copyright. Low enforcement risk for a non-commercial helper; a real basis for
+  a takedown request.
 
 ## Credits
 
