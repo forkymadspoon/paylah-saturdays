@@ -23,7 +23,15 @@ for the full terms.
   code you type if you'd rather not share it. Refuses a fix outside Singapore instead of
   ranking against a list 10,000 km away.
 - **Map view** — Leaflet + OpenStreetMap, lazy-loaded only when opened.
-- **Category filters** and a deep-linkable search (`?q=tampines`).
+- **Every view is a link.** Search, category, Near Me postal, radius and "My stalls" all
+  live in the URL, so a filtered view can be forwarded on WhatsApp and opens the same way.
+- **Per-row actions** — tap "···" for the second-nearest station, **Open in Maps**, and
+  **Share** (the native share sheet on phones, copy-link elsewhere).
+- **Favourites** — star a stall; a "My stalls" chip filters to them. Saved on the device
+  only, never uploaded.
+- **Works offline after the first visit** — a service worker keeps the page usable in a
+  hawker centre with no signal, and repeat Saturday visits load instantly.
+- **Add to calendar** — a recurring Saturday reminder (`.ics`) until 19 Dec.
 - **Keyboard and screen-reader usable** end to end — see *Accessibility* below.
 
 ## The data
@@ -60,8 +68,8 @@ Enriched from three public sources, none of which need an API key:
 - **48 postal codes do not exist in OneMap** — genuine errors in the source PDF, not
   geocoding failures. A second pass (`tools/geocode-fallback.js`) geocodes the merchant's
   *address* instead and recovers 22 of them, each verified by exact block number and road
-  name. Those rows now display the real postal code (`532201` → `523201`) while the
-  original stays searchable, so old links still work. The remaining 26 codes affect 41
+  name. Those rows display the real postal code (`532201` → `523201`) with a small
+  *corrected* marker, while the original stays searchable so old links still work. The remaining 26 codes affect 41
   rows (0.27%), which fall back to the DBS area label and show no MRT tag rather than a
   wrong one — see `tools/postal-unresolved.json` for why each one failed.
 - **Stall unit numbers are best-effort.** Some are misparsed because of how text wraps
@@ -104,6 +112,45 @@ STATIONS  [name, lat, lon, ["NS","EW"]]                      // 184 operating st
 AREAS     ["Ang Mo Kio", "Bedok", ...]                        // 46 planning areas in use
 POSTAL    { "520107": [lat, lon, st1, m1, st2, m2, areaIdx] } // per postal code
 ```
+
+### Shareable URLs
+
+`doSearch` mirrors the view into the query string on every change with
+`history.replaceState` (not `pushState` — typing must not spam history): `q`, `cat`,
+`near` (a postal code, or `me`), `r` (radius step) and `fav`. The loader at the end of the
+script reverses it. Two things the loader deliberately refuses to do on load, because **the
+page makes no network request of any kind before the person acts**:
+
+- `near=me` does **not** request geolocation — a permission prompt before the page has
+  said anything is hostile. It shows a hint and leaves "Near me" for the person to tap.
+- `near=<postal>` restores instantly only if the code is among the 3,593 embedded ones.
+  A postal code that is not (typically someone's home) would need a OneMap call, so the
+  box is pre-filled and the person is asked to tap Go. It used to be dropped silently.
+
+### Offline and repeat visits
+
+`sw.js` is a service worker registered **only over https** (never on the local dev server
+or `file://`). Its strategy is deliberately asymmetric:
+
+- The page is **network-first with cache fallback**, so a deploy shows on the next online
+  load and Pages' 10-minute cache is not compounded; offline, the last good page is served.
+- `og-image.png`, the `.ics` and Leaflet's two cdnjs files are **cache-first** once fetched.
+- **OpenStreetMap tiles, OneMap and Google Analytics are never cached** — OSM's usage
+  policy forbids it, OneMap answers change, and GA must reach GA.
+
+The cache is named by `VERSION` in `sw.js` (`paylah-v1`); old caches are deleted on
+activate. When a new worker installs while an old one controls the page, an
+"Updated — reload" hint appears so nobody sits on stale data. **If you change the
+precached files, bump `VERSION`.** The offline fallback branch is verified by inspection
+of the cache contents on the live site; exercising it needs a real device in airplane mode.
+
+### Favourites
+
+Stored in `localStorage` under `paylah.favs.v1` as an array of composite keys
+(`name|address|unit|postal`, using the *source* postal so a key survives the postal-code
+corrections). Every storage access is wrapped in `try/catch`: private mode throws, and
+"clear site data" wipes it. If storage is unavailable the star and the "My stalls" chip
+do not appear at all, rather than half-working. Nothing is ever transmitted.
 
 ### Sorting
 
@@ -186,11 +233,16 @@ both themes.
 | `mrt-stations.json` | 184 operating MRT/LRT stations with coordinates |
 | `og-image.png` | 1200×630 link-preview card |
 | `sitemap.xml` | Submitted to Google Search Console |
+| `sw.js` | Service worker — offline fallback and instant repeat visits |
+| `paylah-saturdays.ics` | Recurring Saturday calendar reminder, until 19 Dec 2026 |
 | `tools/` | The data pipeline (see below) |
+| `tools/EXTRACTION.md` | Provenance of the merchant data — and the gap in it |
 
 ### Pipeline
 
-Run in this order when refreshing the data. Each step caches, so reruns are cheap.
+Run in this order when refreshing the data. Each step caches, so reruns are cheap. Note
+that the chain starts *after* the merchant rows exist: the PDF → `DATA` extraction is not
+in the repo and cannot currently be re-run — `tools/EXTRACTION.md` records what is known.
 
 ```bash
 node tools/geocode.js tools/postals.json   # postal codes -> lat/long (OneMap, ~11 min cold)
@@ -227,11 +279,16 @@ To deploy, commit and push to `main` — GitHub Pages redeploys automatically wi
 minute or two:
 
 ```bash
-git add index.html && git commit -m "Your change" && git push origin main
+git add -A && git commit -m "Your change" && git push origin main
 ```
 
 Pages caches for 10 minutes, so add a cache-buster (`?v=2`) when checking a change that
 seems slow to appear.
+
+The service worker does not register on `http://localhost`, so local development never
+sees a stale cached page. On the live site the page itself is network-first, so a deploy
+is picked up on the next online load; only the precached static files are cache-first —
+bump `VERSION` in `sw.js` if you change them.
 
 ## SEO and security notes
 
@@ -292,14 +349,20 @@ they happen: a postal code that is *not* in the embedded data is looked up via O
 from OpenStreetMap, whose servers see the map area being viewed. Fixes outside Singapore
 are refused with a message rather than ranked against a list 10,000 km away.
 
+Nothing leaves the device on page load, whatever the URL says: a `near=me` link shows a
+hint rather than requesting geolocation, and a `near=<postal>` link for a code not in the
+embedded data pre-fills the box rather than querying OneMap. Favourites are stored only in
+the browser and are never transmitted.
+
 ## Open decisions
 
 A pre-production review (Sep 2026) left these deliberately unresolved — they are judgment
 calls, not code changes, and are recorded here so they are not lost in git history:
 
-- **22 corrected postal codes** are shown in place of what DBS published, with no on-row
-  marker. Each was verified by exact block and road match (`tools/postal-rescued.json`),
-  but a wrong correction would relocate a merchant silently.
+- **22 corrected postal codes** are shown in place of what DBS published, each with a
+  *corrected* marker. Each was verified by exact block and road match
+  (`tools/postal-rescued.json`); the residual risk is that a wrong correction would
+  relocate a merchant, marker or not.
 - **The page publishes data DBS never did** — per-postal coordinates, planning areas,
   nearest-station distances. Derived from public sources and non-personal, but strictly
   more than the PDF, under DBS's name.
@@ -312,6 +375,18 @@ calls, not code changes, and are recorded here so they are not lost in git histo
 - **Reproducing the full list** likely sits outside DBS's site terms and may engage
   compilation copyright. Low enforcement risk for a non-commercial helper; a real basis for
   a takedown request.
+- **The PDF → `DATA` parse step is not reproducible** (see `tools/EXTRACTION.md`). If DBS
+  republishes the list, the merchant rows cannot be refreshed from source.
+
+Two larger changes were assessed and **deferred until it is known whether the tool
+returns for a 2027 campaign** — neither pays back inside the 14 Saturdays that remained
+when they were weighed:
+
+- **Split the data out of `index.html`.** The file is 87% data (1.62 MB of 1.85 MB); a
+  one-character code fix re-downloads all of it and makes diffs unreadable. A versioned
+  `data.json` would ship code fixes as ~50 KB.
+- **Per-planning-area static pages** (47 areas, median 249 rows) with `ItemList`
+  markup, as SEO landing pages linking into the app. Unlikely to index before 19 Dec.
 
 ## Credits
 
