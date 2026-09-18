@@ -44,8 +44,8 @@ Enriched from three public sources, none of which need an API key:
 | [data.gov.sg](https://data.gov.sg/datasets/d_4765db0e87b9c86336792efe8a1f7a66/view) | URA Master Plan 2019 Planning Area boundaries |
 | Wikipedia | The list of currently-operating MRT/LRT stations |
 
-**Coverage:** 3,571 of 3,619 postal codes geocoded (98.7%), giving full geo data for
-15,086 of 15,153 rows (99.56%).
+**Coverage:** 3,593 of 3,619 postal codes geocoded (99.3%), giving full geo data for
+15,112 of 15,153 rows (99.73%).
 
 ### Caveats worth knowing
 
@@ -54,10 +54,13 @@ Enriched from three public sources, none of which need an API key:
 - **Heartland shop rows** carry a real per-merchant postal code. **Hawker centre, wet
   market, coffeeshop and industrial canteen rows** carry the postal code of the
   *building*, so every stall inside one shares a position.
-- **48 postal codes do not exist in OneMap** and are genuine errors in the source PDF —
-  e.g. `532201` is a transposition of the real `523201`. They affect 67 rows (0.44%),
-  which fall back to the DBS area label and show no MRT tag rather than a wrong one.
-  Full list in `tools/geocode-failures.json`.
+- **48 postal codes do not exist in OneMap** — genuine errors in the source PDF, not
+  geocoding failures. A second pass (`tools/geocode-fallback.js`) geocodes the merchant's
+  *address* instead and recovers 22 of them, each verified by exact block number and road
+  name. Those rows now display the real postal code (`532201` → `523201`) while the
+  original stays searchable, so old links still work. The remaining 26 codes affect 41
+  rows (0.27%), which fall back to the DBS area label and show no MRT tag rather than a
+  wrong one — see `tools/postal-unresolved.json` for why each one failed.
 - **Stall unit numbers are best-effort.** Some are misparsed because of how text wraps
   in the source PDF; ~120 rows have a unit number in the name field instead of a
   merchant name, and these sort to the bottom.
@@ -150,6 +153,7 @@ Run in this order when refreshing the data. Each step caches, so reruns are chea
 
 ```bash
 node tools/geocode.js tools/postals.json   # postal codes -> lat/long (OneMap, ~11 min cold)
+node tools/geocode-fallback.js             # retry the failures by address, verified match
 node tools/geocode-stations.js             # station names -> coordinates
 node tools/assign-areas.js                 # point-in-polygon -> planning areas
 node tools/build-geo-data.js               # inject STATIONS/AREAS/POSTAL into index.html
@@ -157,7 +161,11 @@ node tools/build-geo-data.js               # inject STATIONS/AREAS/POSTAL into i
 
 `tools/geocode.js` records unresolvable postal codes in `tools/geocode-failures.json`
 rather than dropping them, rejects fuzzy postal matches, and rejects coordinates outside
-Singapore. `tools/assign-areas.js` needs the planning-area GeoJSON, which is gitignored
+Singapore. `tools/geocode-fallback.js` then retries those by address, accepting a result
+only when the block number *and* road name both match — OneMap answers a fuzzy address
+query with something nearby rather than nothing, and an unverified match would put
+merchants on the wrong street. It rescued 22 of 48; results merge into
+`postal-to-latlong.json`, and the rest are explained in `tools/postal-unresolved.json`. `tools/assign-areas.js` needs the planning-area GeoJSON, which is gitignored
 because of its size — re-download it from
 [data.gov.sg](https://data.gov.sg/datasets/d_4765db0e87b9c86336792efe8a1f7a66/view)
 to `tools/planning-areas.geojson`.

@@ -1,0 +1,200 @@
+{
+ "120772": {
+  "ok": true,
+  "lat": 1.304289479304296,
+  "lon": 103.7640842854275,
+  "realPostal": "120727",
+  "matchedAddr": "727 CLEMENTI WEST STREET 2 SINGAPORE 120727",
+  "query": "727 CLEMENTI WEST STREET 2",
+  "confidence": "verified_block_and_road"
+ },
+ "131107": {
+  "ok": true,
+  "lat": 1.307353802315948,
+  "lon": 103.78454843987,
+  "realPostal": "131019",
+  "matchedAddr": "19A DOVER CRESCENT MULTI STOREY CAR PARK SINGAPORE 131019",
+  "query": "19A DOVER CRESENT",
+  "confidence": "verified_block_and_road"
+ },
+ "169334": {
+  "ok": true,
+  "lat": 1.277138379561725,
+  "lon": 103.8367685465678,
+  "realPostal": "169344",
+  "matchedAddr": "11 KAMPONG BAHRU ROAD BLAIR PLAIN CONSERVATION AREA SINGAPORE 169344",
+  "query": "11 KAMPONG BAHRU ROAD",
+  "confidence": "verified_block_and_road"
+ },
+ "194656": {
+  "ok": true,
+  "lat": 1.301255631857421,
+  "lon": 103.8595813520123,
+  "realPostal": "199656",
+  "matchedAddr": "17 BAGHDAD STREET SINGAPORE 199656",
+  "query": "17 BAGHDAD STREET",
+  "confidence": "verified_block_and_road"
+ },
+ "199185": {
+  "ok": true,
+  "lat": 1.302233965060222,
+  "lon": 103.8583670344583,
+  "realPostal": "199815",
+  "matchedAddr": "120 ARAB STREET SINGAPORE 199815",
+  "query": "120 ARAB STREET",
+  "confidence": "verified_block_and_road"
+ },
+ "209275": {
+  "ok": true,
+  "lat": 1.306833027118813,
+  "lon": 103.8527109021446,
+  "realPostal": "209725",
+  "matchedAddr": "14 CUFF ROAD LITTLE INDIA CONSERVATION AREA SINGAPORE 209725",
+  "query": "14 CUFF RD",
+  "confidence": "verified_block_and_road"
+ },
+ "209410": {
+  "ok": true,
+  "lat": 1.305558914993139,
+  "lon": 103.8531495199137,
+  "realPostal": "209411",
+  "matchedAddr": "84 DUNLOP STREET LITTLE INDIA CONSERVATION AREA SINGAPORE 209411",
+  "query": "84 DUNLOP STREET",
+  "confidence": "verified_block_and_road"
+ },
+ "218613": {
+  "ok": true,
+  "lat": 1.315068149535778,
+  "lon": 103.8577761269933,
+  "realPostal": "218163",
+  "matchedAddr": "531 SERANGOON ROAD ATLANTIS @ 531 SINGAPORE 218163",
+  "query": "531 SERANGOON ROAD",
+  "confidence": "verified_block_and_road"
+ },
+ "219519": {
+  "ok": true,
+  "lat": 1.30700771864724,
+  "lon": 103.8514992379793,
+  "realPostal": "219159",
+  "matchedAddr": "20 KERBAU ROAD LITTLE INDIA CONSERVATION AREA SINGAPORE 219159",
+  "query": "20 KERBAU ROAD",
+  "confidence": "verified_block_and_road"
+ },
+ "328218": {
+  "ok": true,
+  "lat": 1.327500620381797,
+  "lon": 103.8668217516839,
+  "realPostal": "328281",
+  "matchedAddr": "6 RUBY LANE SINGAPORE 328281",
+  "query": "6 RUBY LANE",
+  "confidence": "verified_block_and_road"
+ },
+ "328856": {
+  "ok": true,
+  "lat": 1.32475415552489,
+  "lon": 103.8535265240816,
+  "realPostal": "328816",
+  "matchedAddr": "42 KIM KEAT ROAD SINGAPORE 328816",
+  "query": "42 KIM KEAT ROAD",
+  "confidence": "verified_block_and_road"
+ },
+ "360337": {
+  "ok": true,
+  "lat": 1.332824752144381,
+  "lon": 103.8789099839817,
+  "realPostal": "367862",
+  "matchedAddr": "377 UPPER ALJUNIED ROAD SINGAPORE 367862",
+  "query": "377 UPPER ALJUNIED ROAD",
+  "confidence": "verified_block_and_road"
+ },
+ "440088": {
+  "ok": true,
+  "lat": 1.302481100332464,
+  "lon": 103.9067913370773,
+  "realPostal": "440082",
+  "matchedAddr": "82 MARINE PARADE CENTRAL MARINE PARADE PROMENADE SINGAPORE 440082",
+  "query": "82 MARINE PARADE CENTRAL",
+  "confidence": "verified_block_and_road"
+ },
+ "500000": {
+  "ok": true,
+  "lat": 1.388546562290224,
+  "lon": 103.9878045034823,
+  "realPostal": "500001",
+  "matchedAddr": "1 CHANGI VILLAGE ROAD SINGAPORE 500001",
+  "query": "1 CHANGI VILLAGE ROAD",
+  "confidence": "verified_block_and_road"
+ },
+ "530664": {
+  "ok": true,
+  "lat": 1.371437364639038,
+  "lon": 103.8812610789201,
+  "realPostal": "530644",
+  "matchedAddr": "644 HOUGANG AVENUE 8 SINGAPORE 530644",
+  "query": "644 HOUGANG AVE 8",
+  "confidence": "verified_block_and_road"
+ },
+ "532201": {
+  "ok": true,
+  "lat": 1.352820400934809,
+  "lon": 103.9529763980155,
+  "realPostal": "523201",
+  "matchedAddr": "201C TAMPINES STREET 21 SINGAPORE 523201",
+  "query": "201C TAMPINES STREET 21",
+  "confidence": "verified_block_and_road"
+ },
+ "534747": {
+  "ok": true,
+  "lat": 1.362845750451978,
+  "lon": 103.8875881974633,
+  "realPostal": "534757",
+  "matchedAddr": "1019 UPPER SERANGOON ROAD SINGAPORE 534757",
+  "query": "1019 UPPER SERANGOON RD",
+  "confidence": "verified_block_and_road"
+ },
+ "561443": {
+  "ok": true,
+  "lat": 1.36604388871675,
+  "lon": 103.8553689686805,
+  "realPostal": "560443",
+  "matchedAddr": "443 ANG MO KIO AVENUE 10 SINGAPORE 560443",
+  "query": "443 ANG MO KIO AVE 10",
+  "confidence": "verified_block_and_road"
+ },
+ "561452": {
+  "ok": true,
+  "lat": 1.368897511313791,
+  "lon": 103.8562008351468,
+  "realPostal": "560452",
+  "matchedAddr": "452 ANG MO KIO AVENUE 10 CHONG BOON CENTRE SINGAPORE 560452",
+  "query": "452 ANG MO KIO AVE 10",
+  "confidence": "verified_block_and_road"
+ },
+ "568242": {
+  "ok": true,
+  "lat": 1.317412041801261,
+  "lon": 103.7674169859947,
+  "realPostal": "120378",
+  "matchedAddr": "378 CLEMENTI AVENUE 5 SINGAPORE 120378",
+  "query": "378 Clementi Ave 5",
+  "confidence": "verified_block_and_road"
+ },
+ "657209": {
+  "ok": true,
+  "lat": 1.344488382132131,
+  "lon": 103.7599424993762,
+  "realPostal": "657289",
+  "matchedAddr": "289H BUKIT BATOK STREET 25 MULTI STOREY CAR PARK SINGAPORE 657289",
+  "query": "289H BUKIT BATOK ST25",
+  "confidence": "verified_block_and_road"
+ },
+ "760061": {
+  "ok": true,
+  "lat": 1.435309736041671,
+  "lon": 103.8386062893633,
+  "realPostal": "760261",
+  "matchedAddr": "261 YISHUN STREET 22 SINGAPORE 760261",
+  "query": "261 YISHUN ST 22",
+  "confidence": "verified_block_and_road"
+ }
+}

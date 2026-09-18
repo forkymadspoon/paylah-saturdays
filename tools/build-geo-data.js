@@ -49,6 +49,10 @@ for (const [postal, g] of Object.entries(cache)) {
     b.i, Math.round(b.d / 10) * 10,
     ai
   ];
+  // Where the source postal code does not exist and the address resolved to a real one
+  // (tools/geocode-fallback.js), carry the correction so the page can show a postal code
+  // that is actually navigable. Only emitted when it differs, to keep the payload small.
+  if (g.realPostal && g.realPostal !== postal) POSTAL[postal][7] = g.realPostal;
   if (a.d > worstNearest.d) worstNearest = { d: a.d, postal };
 }
 
@@ -70,6 +74,7 @@ console.log('injected into index.html');
 
 console.log(`stations: ${ST.length}`);
 console.log(`planning areas: ${AREAS.length}`);
+console.log(`corrected postal codes: ${Object.values(POSTAL).filter(v => v[7]).length}`);
 console.log(`postal codes: ${Object.keys(POSTAL).length}`);
 console.log(`geo-data.js: ${(out.length / 1024).toFixed(0)} KB`);
 console.log(`furthest any merchant is from a station: ${(worstNearest.d / 1000).toFixed(1)} km (S${worstNearest.postal})`);

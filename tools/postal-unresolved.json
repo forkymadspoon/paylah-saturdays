@@ -1,0 +1,240 @@
+{
+ "121325": {
+  "rows": 1,
+  "addresses": [
+   "325A CLEMENTI AVENUE 5"
+  ],
+  "reasons": [
+   "325A CLEMENTI AVENUE 5 -> no_results"
+  ]
+ },
+ "208795": {
+  "rows": 1,
+  "addresses": [
+   "25 JALAN BESAR"
+  ],
+  "reasons": [
+   "25 JALAN BESAR -> no_result_matched_block_and_road"
+  ]
+ },
+ "210669": {
+  "rows": 3,
+  "addresses": [
+   "644 BUFFALO RD"
+  ],
+  "reasons": [
+   "644 BUFFALO RD -> no_results"
+  ]
+ },
+ "218286": {
+  "rows": 1,
+  "addresses": [
+   "5 ROBERTS LANE"
+  ],
+  "reasons": [
+   "5 ROBERTS LANE -> no_results"
+  ]
+ },
+ "260928": {
+  "rows": 2,
+  "addresses": [
+   "926 YISHUN CENTRAL"
+  ],
+  "reasons": [
+   "926 YISHUN CENTRAL -> no_result_matched_block_and_road"
+  ]
+ },
+ "271015": {
+  "rows": 1,
+  "addresses": [
+   "15 HOLLAND DRIVE"
+  ],
+  "reasons": [
+   "15 HOLLAND DRIVE -> no_result_matched_block_and_road"
+  ]
+ },
+ "271025": {
+  "rows": 2,
+  "addresses": [
+   "25A GHIM MOH LINK"
+  ],
+  "reasons": [
+   "25A GHIM MOH LINK -> no_results"
+  ]
+ },
+ "310102": {
+  "rows": 1,
+  "addresses": [
+   "LEE KWANG KEE TEOCHEW CUISINE"
+  ],
+  "reasons": [
+   "LEE KWANG KEE TEOCHEW CUISINE -> no_block_number_in_source_address"
+  ]
+ },
+ "319196": {
+  "rows": 1,
+  "addresses": [
+   "190A TOA PAYOH CENTRAL"
+  ],
+  "reasons": [
+   "190A TOA PAYOH CENTRAL -> no_results"
+  ]
+ },
+ "329775": {
+  "rows": 2,
+  "addresses": [
+   "343 BALESTIER ROAD",
+   "343-343A BALESTIER ROAD"
+  ],
+  "reasons": [
+   "343 BALESTIER ROAD -> no_results",
+   "343-343A BALESTIER ROAD -> no_results"
+  ]
+ },
+ "389475": {
+  "rows": 1,
+  "addresses": [
+   "519 GEYLANG ROAD"
+  ],
+  "reasons": [
+   "519 GEYLANG ROAD -> no_results"
+  ]
+ },
+ "437134": {
+  "rows": 1,
+  "addresses": [
+   "378 TANJONG KATONG ROAD"
+  ],
+  "reasons": [
+   "378 TANJONG KATONG ROAD -> no_results"
+  ]
+ },
+ "510652": {
+  "rows": 6,
+  "addresses": [
+   "623 ELIAS MALL",
+   "625 ELIAS MALL"
+  ],
+  "reasons": [
+   "623 ELIAS MALL -> no_result_matched_block_and_road",
+   "625 ELIAS MALL -> no_result_matched_block_and_road"
+  ]
+ },
+ "521130": {
+  "rows": 1,
+  "addresses": [
+   "144 TAMPINES STREET 11"
+  ],
+  "reasons": [
+   "144 TAMPINES STREET 11 -> no_result_matched_block_and_road"
+  ]
+ },
+ "535066": {
+  "rows": 1,
+  "addresses": [
+   "12 TAMPINES ROAD"
+  ],
+  "reasons": [
+   "12 TAMPINES ROAD -> no_result_matched_block_and_road"
+  ]
+ },
+ "560701": {
+  "rows": 1,
+  "addresses": [
+   "701 ANG MO KIO AVENUE 3"
+  ],
+  "reasons": [
+   "701 ANG MO KIO AVENUE 3 -> no_result_matched_block_and_road"
+  ]
+ },
+ "562266": {
+  "rows": 1,
+  "addresses": [
+   "266B ANG MO KIO AVE 1"
+  ],
+  "reasons": [
+   "266B ANG MO KIO AVE 1 -> no_results"
+  ]
+ },
+ "569117": {
+  "rows": 1,
+  "addresses": [
+   "15 ANG MO KIO STREET 63"
+  ],
+  "reasons": [
+   "15 ANG MO KIO STREET 63 -> no_results"
+  ]
+ },
+ "569773": {
+  "rows": 1,
+  "addresses": [
+   "204 ANG MO KIO AVENUE 9"
+  ],
+  "reasons": [
+   "204 ANG MO KIO AVENUE 9 -> no_result_matched_block_and_road"
+  ]
+ },
+ "569843": {
+  "rows": 2,
+  "addresses": [
+   "4500 ANG MO KIO AVENUE 6"
+  ],
+  "reasons": [
+   "4500 ANG MO KIO AVENUE 6 -> no_results"
+  ]
+ },
+ "569927": {
+  "rows": 1,
+  "addresses": [
+   "3551 ANG MO KIO AVENUE 3"
+  ],
+  "reasons": [
+   "3551 ANG MO KIO AVENUE 3 -> no_results"
+  ]
+ },
+ "731006": {
+  "rows": 1,
+  "addresses": [
+   "#01-280"
+  ],
+  "reasons": [
+   "#01-280 -> no_results"
+  ]
+ },
+ "760929": {
+  "rows": 1,
+  "addresses": [
+   "929 YISHUN CENTRAL 1"
+  ],
+  "reasons": [
+   "929 YISHUN CENTRAL 1 -> no_results"
+  ]
+ },
+ "769091": {
+  "rows": 3,
+  "addresses": [
+   "102 YISHUN AVENUE 2"
+  ],
+  "reasons": [
+   "102 YISHUN AVENUE 2 -> no_results"
+  ]
+ },
+ "828694": {
+  "rows": 3,
+  "addresses": [
+   "3 PUNGGOL POINT ROAD"
+  ],
+  "reasons": [
+   "3 PUNGGOL POINT ROAD -> no_results"
+  ]
+ },
+ "016011": {
+  "rows": 1,
+  "addresses": [
+   "HOCK HUA COFFEE SHOP"
+  ],
+  "reasons": [
+   "HOCK HUA COFFEE SHOP -> no_block_number_in_source_address"
+  ]
+ }
+}
