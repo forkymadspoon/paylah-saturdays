@@ -29,7 +29,9 @@ function haversine(lat1, lon1, lat2, lon2) {
   return 2 * R * Math.asin(Math.sqrt(a));
 }
 
-const ST = stations.map(s => [s.name, +s.lat.toFixed(5), +s.lon.toFixed(5)]);
+// [name, lat, lon, lines] -- lines drives the coloured line indicator on each tag.
+const ST = stations.map(s => [s.name, +s.lat.toFixed(5), +s.lon.toFixed(5), s.lines || []]);
+const LINES = JSON.parse(fs.readFileSync(path.join(__dirname, 'line-colours.json'), 'utf8'));
 // Planning-area names are stored once and referenced by index, since ~3,600 postal
 // codes share only ~55 of them.
 const AREAS = [...new Set(Object.values(postalArea))].sort();
@@ -57,6 +59,7 @@ for (const [postal, g] of Object.entries(cache)) {
 }
 
 const out =
+  `const LINES = ${JSON.stringify(LINES)};\n` +
   `const STATIONS = ${JSON.stringify(ST)};\n` +
   `const AREAS = ${JSON.stringify(AREAS)};\n` +
   `const POSTAL = ${JSON.stringify(POSTAL)};\n`;
@@ -74,6 +77,7 @@ console.log('injected into index.html');
 
 console.log(`stations: ${ST.length}`);
 console.log(`planning areas: ${AREAS.length}`);
+console.log(`stations with line data: ${ST.filter(x => x[3] && x[3].length).length}/${ST.length}`);
 console.log(`corrected postal codes: ${Object.values(POSTAL).filter(v => v[7]).length}`);
 console.log(`postal codes: ${Object.keys(POSTAL).length}`);
 console.log(`geo-data.js: ${(out.length / 1024).toFixed(0)} KB`);

@@ -1,0 +1,62 @@
+{
+ "NS": {
+  "name": "North South",
+  "color": "#d42e12"
+ },
+ "EW": {
+  "name": "East West",
+  "color": "#009645"
+ },
+ "CG": {
+  "name": "Changi Airport Branch",
+  "color": "#b85600"
+ },
+ "NE": {
+  "name": "North East",
+  "color": "#9900aa"
+ },
+ "CC": {
+  "name": "Circle",
+  "color": "#fa9e0d"
+ },
+ "CE": {
+  "name": "Circle",
+  "color": "#fa9e0d"
+ },
+ "DT": {
+  "name": "Downtown",
+  "color": "#005ec4"
+ },
+ "TE": {
+  "name": "Thomson-East Coast",
+  "color": "#9D5B25"
+ },
+ "BP": {
+  "name": "Bukit Panjang LRT",
+  "color": "#748477"
+ },
+ "SE": {
+  "name": "Sengkang LRT",
+  "color": "#748477"
+ },
+ "SW": {
+  "name": "Sengkang LRT",
+  "color": "#748477"
+ },
+ "STC": {
+  "name": "Sengkang LRT",
+  "color": "#748477"
+ },
+ "PE": {
+  "name": "Punggol LRT",
+  "color": "#748477"
+ },
+ "PW": {
+  "name": "Punggol LRT",
+  "color": "#748477"
+ },
+ "PTC": {
+  "name": "Punggol LRT",
+  "color": "#748477"
+ }
+}

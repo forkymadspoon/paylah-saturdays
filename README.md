@@ -88,7 +88,8 @@ Each merchant row is a fixed six-element array:
 Geo data lives in a generated block between `// GEO-DATA-START` and `// GEO-DATA-END`:
 
 ```js
-STATIONS  [name, lat, lon]                                    // 184 operating stations
+LINES     { NS: {name, color}, ... }                          // official line colours
+STATIONS  [name, lat, lon, ["NS","EW"]]                      // 184 operating stations
 AREAS     ["Ang Mo Kio", "Bedok", ...]                        // 46 planning areas in use
 POSTAL    { "520107": [lat, lon, st1, m1, st2, m2, areaIdx] } // per postal code
 ```
@@ -155,6 +156,7 @@ Run in this order when refreshing the data. Each step caches, so reruns are chea
 node tools/geocode.js tools/postals.json   # postal codes -> lat/long (OneMap, ~11 min cold)
 node tools/geocode-fallback.js             # retry the failures by address, verified match
 node tools/geocode-stations.js             # station names -> coordinates
+node tools/station-lines.js                # rail line membership + official line colours
 node tools/assign-areas.js                 # point-in-polygon -> planning areas
 node tools/build-geo-data.js               # inject STATIONS/AREAS/POSTAL into index.html
 ```
