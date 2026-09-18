@@ -184,9 +184,15 @@ seems slow to appear.
 ## SEO and security notes
 
 The page carries a meta description, canonical URL, Open Graph and Twitter card tags,
-`theme-color` for light and dark, and JSON-LD (`WebSite` with a working `SearchAction`,
-plus `Dataset`). There's deliberately no `FAQPage` or `HowTo` markup — Google requires
-visible on-page content backing those, and this page has none.
+`theme-color` for light and dark, and JSON-LD (`WebSite` with a working `SearchAction`).
+
+Three schema types are deliberately absent. `FAQPage` and `HowTo` need visible on-page
+content backing them, which this page has none of. `Dataset` was removed in Sep 2026: it
+feeds Google Dataset Search — a vertical for research and government data repositories,
+not somewhere anyone looks for a hawker stall — so it earned nothing while Search Console
+repeatedly flagged its missing `license` field. Supplying that field was the wrong fix,
+since the underlying data is DBS's and declaring a licence would assert rights we don't
+hold. Don't re-add it.
 
 The Google Search Console verification `<meta>` tag near the top of `<head>` **must stay
 there permanently**; Search Console re-checks periodically and un-verifies the property

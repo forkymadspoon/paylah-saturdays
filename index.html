@@ -50,57 +50,33 @@
 <meta name="twitter:description" content="Search all 15,153 participating merchants by name, postal code, area or nearest MRT.">
 <meta name="twitter:image" content="https://forkymadspoon.github.io/paylah-saturdays/og-image.png">
 
-<!-- Structured data. Only describes what is actually on the page: a searchable
-     dataset with a working ?q= search entry point. No FAQPage/HowTo markup, since
-     the page has no visible FAQ content to back it. -->
+<!-- Structured data: the site and its search entry point, nothing more.
+     The ?q= URL below is a real, working entry point, not decoration.
+
+     Deliberately NOT declared here:
+       Dataset  - removed 2026-09-18. It feeds Google Dataset Search, a vertical for
+                  research and government data repositories, which is not where anyone
+                  looks for a hawker stall. It earned nothing and Search Console kept
+                  flagging a missing "license" field -- and the data is DBS's, so
+                  declaring a licence would assert rights that are not ours to grant.
+       FAQPage / HowTo - the page has no visible FAQ content to back them. -->
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "WebSite",
-      "@id": "https://forkymadspoon.github.io/paylah-saturdays/#website",
-      "url": "https://forkymadspoon.github.io/paylah-saturdays/",
-      "name": "DBS PayLah! Saturdays — Merchant Search",
-      "description": "Search all 15,153 DBS PayLah! Saturdays participating merchants by name, postal code, address, area or nearest MRT.",
-      "inLanguage": "en-SG",
-      "potentialAction": {
-        "@type": "SearchAction",
-        "target": {
-          "@type": "EntryPoint",
-          "urlTemplate": "https://forkymadspoon.github.io/paylah-saturdays/?q={search_term_string}"
-        },
-        "query-input": "required name=search_term_string"
-      }
+  "@type": "WebSite",
+  "@id": "https://forkymadspoon.github.io/paylah-saturdays/#website",
+  "url": "https://forkymadspoon.github.io/paylah-saturdays/",
+  "name": "DBS PayLah! Saturdays — Merchant Search",
+  "description": "Search all 15,153 DBS PayLah! Saturdays participating merchants by name, postal code, address, area or nearest MRT.",
+  "inLanguage": "en-SG",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": {
+      "@type": "EntryPoint",
+      "urlTemplate": "https://forkymadspoon.github.io/paylah-saturdays/?q={search_term_string}"
     },
-    {
-      "@type": "Dataset",
-      "@id": "https://forkymadspoon.github.io/paylah-saturdays/#dataset",
-      "name": "DBS PayLah! Saturdays participating merchants",
-      "description": "15,153 participating merchants in the DBS/POSB PayLah! Saturdays cashback campaign (29 August - 19 December 2026), parsed from the official DBS merchant PDF. Covers heartland shops, hawker centres, wet markets, coffeeshops and industrial canteens, with area and nearest-MRT groupings.",
-      "url": "https://forkymadspoon.github.io/paylah-saturdays/",
-      "inLanguage": "en-SG",
-      "spatialCoverage": {
-        "@type": "Place",
-        "name": "Singapore"
-      },
-      "isBasedOn": "https://www.dbs.com.sg/iwov-resources/media/pdf/deposits/promotions/paylah/saturdays/dbs-paylah-saturdays-participating-merchants.pdf",
-      "creator": {
-        "@type": "Person",
-        "name": "Madeleine Koh",
-        "url": "https://www.linkedin.com/in/madeleine-cckoh"
-      },
-      "temporalCoverage": "2026-08-29/2026-12-19",
-      "keywords": [
-        "DBS PayLah",
-        "Saturday cashback",
-        "hawker centres",
-        "wet markets",
-        "heartland shops",
-        "Singapore"
-      ]
-    }
-  ]
+    "query-input": "required name=search_term_string"
+  }
 }
 </script>
 <style>
