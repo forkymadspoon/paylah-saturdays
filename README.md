@@ -235,8 +235,15 @@ the experience for people who search rather than scroll.
 ## Analytics and privacy
 
 Google Analytics 4 (property `G-ZK37J9VYWP`) is installed near the bottom of
-`index.html`. GA4 sets cookies and collects visitor data, and there is currently **no
-consent banner**. That is generally acceptable under Singapore's PDPA for basic
+`index.html`. It is configured with `page_location` set to the path only, so a `?q=`
+query — which can hold a typed postal code — never reaches Google. GA4 sets cookies and
+collects visitor data, and there is currently **no consent banner**.
+
+Location handling: a device fix from "Near me" is used only in the browser. Two things do
+leave the device, and the page says so at the point they happen: a postal code that is not
+in the embedded data is looked up via OneMap, and the map fetches tiles from OpenStreetMap,
+whose servers see the map area being viewed. Fixes outside Singapore are refused with a
+message rather than ranked against a list 10,000 km away. That is generally acceptable under Singapore's PDPA for basic
 analytics, but GDPR expects consent before analytics cookies for EU visitors — worth
 addressing with Google Consent Mode or a cookieless alternative if that audience matters.
 

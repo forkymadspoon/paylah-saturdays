@@ -514,11 +514,17 @@ footer a { color: var(--text-muted); }
   </header>
 
   <main>
+  <noscript>
+    <p class="sub">This search needs JavaScript. Without it, the merchant list is available as
+    <a href="https://www.dbs.com.sg/iwov-resources/media/pdf/deposits/promotions/paylah/saturdays/dbs-paylah-saturdays-participating-merchants.pdf" rel="noopener">DBS's official PDF</a>
+    and on the <a href="https://www.dbs.com.sg/personal/promotion/paylah-saturdays" rel="noopener">PayLah! Saturdays promotion page</a>.</p>
+  </noscript>
   <div class="search-row">
     <div class="search-wrap">
       <label class="sr-only" for="q">Search merchants by name, postal code, address, area or MRT station</label>
-      <input type="search" id="q" placeholder="Search name, postal code, area, MRT, neighbourhood…" autofocus autocomplete="off">
-      <div id="suggestions"></div>
+      <input type="search" id="q" placeholder="Search name, postal code, area, MRT, neighbourhood…" autocomplete="off"
+             role="combobox" aria-autocomplete="list" aria-controls="suggestions" aria-expanded="false">
+      <div id="suggestions" role="listbox" aria-label="Search suggestions"></div>
     </div>
   </div>
   <div class="filters" id="filters"></div>
@@ -540,7 +546,7 @@ footer a { color: var(--text-muted); }
   </details>
   <div class="meta-row">
     <span id="count" aria-live="polite" aria-atomic="true"></span>
-    <button type="button" id="cleartext" style="display:none;">Clear</button>
+    <button type="button" id="cleartext" hidden>Clear</button>
   </div>
   <h2 class="sr-only">Search results</h2>
   <div id="results"></div>
@@ -550,13 +556,18 @@ footer a { color: var(--text-muted); }
     <h2 class="sr-only">About this list and its data sources</h2>
     15,153 entries parsed from the official DBS/POSB PayLah! Saturday Savings merchant PDF (dated per the file's metadata). Heartland-shop rows include a direct postal code per merchant. Hawker centre, wet market, coffeeshop, and industrial-canteen rows show the postal code of the building — individual stall unit numbers are best-effort and a small number may be misparsed due to PDF text wrapping. When it matters, cross-check with DBS's original PDF or in-app list.
     <br><br>
-    Nearest MRT/LRT tags are Claude's own approximation, mapped from the DBS document's area groupings to nearby stations on Singapore's currently operating lines — this is not in the source PDF, which never mentions MRT stations. It's a rough proximity guide (area-level, not per-merchant), so don't treat it as a walking-distance guarantee, especially for large areas like "Jurong" or "Raffles Place, Marina, Cecil, People's Park" that span many stations.
+    Nearest MRT/LRT tags, planning areas and distances are not in the source PDF. Each merchant's postal code is geocoded individually and matched to the closest currently operating stations by straight-line distance — a proximity guide, not a walking-distance guarantee. A small number of postal codes in the PDF do not exist; where the address resolved to a real one, the corrected code is shown.
+    <br><br>
+    <strong>Independent tool — not affiliated with or endorsed by DBS Bank.</strong> Merchant data © DBS/POSB, from their published PDF. Geocoding © OneMap (Singapore Land Authority). Planning areas © Urban Redevelopment Authority via data.gov.sg (Singapore Open Data Licence). Map data © OpenStreetMap contributors.
     <br><br>
     Built by <a href="https://www.linkedin.com/in/madeleine-cckoh" target="_blank" rel="noopener">Madeleine Koh</a>. Spot an issue or have a suggestion? Reach out on LinkedIn.
   </footer>
 </div>
 
 <script>
+// Everything lives inside one closure: 67 top-level bindings were sharing the global
+// scope with the analytics loader and any script added later.
+(() => {
 // Per-merchant nearest MRT/LRT, replacing the previous area-level approximation.
 // The old lookup mapped ~26 broad DBS "Area" groupings to a handful of stations each,
 // so Simei, Tampines and Pasir Ris -- different stations, kilometres apart -- all
@@ -681,6 +692,16 @@ DATA.sort((a, b) =>
   // the data. Comparing the raw rows breaks it, guaranteeing a total order.
   (String(a) < String(b) ? -1 : String(a) > String(b) ? 1 : 0)
 );
+
+// One lowercase search string per row, built once after the sort. Rebuilding this
+// concatenation for 15k rows on every keystroke was measurably fine but pointless; the
+// terms never change between builds. Must include everything the old per-keystroke
+// version did -- corrected postal, planning area, nearest stations -- so results are
+// identical.
+const HAY = new Map(DATA.map(r => [r,
+  (r[0] + ' ' + r[1] + ' ' + r[2] + ' ' + r[3] + ' ' + displayPostal(r[3]) + ' ' + r[4] + ' ' + r[5] + ' '
+   + nearestFor(r[3]).map(x => x.name).join(' ') + ' ' + areaFor(r[3], '')).toLowerCase()
+]));
 
 const CATEGORIES = [...new Set(DATA.map(r => r[5]))].sort();
 let activeCategory = null;
@@ -835,19 +856,29 @@ function buildSuggestions(raw) {
   return out.slice(0, 12);
 }
 
+// Keep the ARIA state in step with the visual .active highlight, so a screen reader
+// announces which suggestion the arrow keys have reached.
+function setActiveOption(items) {
+  items.forEach((el, i) => el.setAttribute('aria-selected', i === activeSuggIndex ? 'true' : 'false'));
+  if (activeSuggIndex >= 0 && items[activeSuggIndex]) qEl.setAttribute('aria-activedescendant', items[activeSuggIndex].id);
+  else qEl.removeAttribute('aria-activedescendant');
+}
+
 function renderSuggestions(list) {
   currentSuggestions = list;
   activeSuggIndex = -1;
   if (!list.length) {
     suggEl.classList.remove('open');
     suggEl.innerHTML = '';
+    qEl.setAttribute('aria-expanded', 'false');
+    qEl.removeAttribute('aria-activedescendant');
     return;
   }
   suggEl.innerHTML = list.map((s, i) => {
     const tagClass = { postal: 'tag-postal', area: 'tag-area', service: 'tag-service', name: 'tag-name', mrt: 'tag-mrt', hood: 'tag-hood' }[s.type];
     const tagLabel = { postal: 'Postal', area: 'Area', service: 'Service', name: 'Merchant', mrt: 'MRT/LRT', hood: 'Neighbourhood' }[s.type];
     return `
-      <div class="sugg-item" data-idx="${i}">
+      <div class="sugg-item" role="option" id="sugg-${i}" aria-selected="false" data-idx="${i}">
         <div class="sugg-text">
           <div class="sugg-main">${escapeHtml(s.label)}</div>
           ${s.sub ? `<div class="sugg-sub">${escapeHtml(s.sub)}</div>` : ''}
@@ -856,6 +887,7 @@ function renderSuggestions(list) {
       </div>`;
   }).join('');
   suggEl.classList.add('open');
+  qEl.setAttribute('aria-expanded', 'true');
 
   suggEl.querySelectorAll('.sugg-item').forEach(el => {
     el.addEventListener('mousedown', (e) => {
@@ -898,14 +930,13 @@ function clearAll() {
 function doSearch() {
   const raw = qEl.value.trim().toLowerCase();
   const terms = raw.split(/\s+/).filter(Boolean);
-  clearEl.style.display = (raw || activeCategory) ? 'inline' : 'none';
+  clearEl.hidden = !(raw || activeCategory);
 
   let matches = DATA;
   if (activeCategory) matches = matches.filter(r => r[5] === activeCategory);
   if (terms.length) {
     matches = matches.filter(r => {
-      const mrt = nearestFor(r[3]).map(x => x.name).join(' ');
-      const hay = (r[0] + ' ' + r[1] + ' ' + r[2] + ' ' + r[3] + ' ' + displayPostal(r[3]) + ' ' + r[4] + ' ' + r[5] + ' ' + mrt + ' ' + areaFor(r[3], '')).toLowerCase();
+      const hay = HAY.get(r);
       return terms.every(t => hay.includes(t));
     });
   }
@@ -1015,12 +1046,14 @@ qEl.addEventListener('keydown', (e) => {
     e.preventDefault();
     activeSuggIndex = Math.min(activeSuggIndex + 1, items.length - 1);
     items.forEach((el, i) => el.classList.toggle('active', i === activeSuggIndex));
-    items[activeSuggIndex]?.scrollIntoView({ block: 'nearest' });
+    setActiveOption(items);
+    if (items[activeSuggIndex]) items[activeSuggIndex].scrollIntoView({ block: 'nearest' });
   } else if (e.key === 'ArrowUp') {
     e.preventDefault();
     activeSuggIndex = Math.max(activeSuggIndex - 1, 0);
     items.forEach((el, i) => el.classList.toggle('active', i === activeSuggIndex));
-    items[activeSuggIndex]?.scrollIntoView({ block: 'nearest' });
+    setActiveOption(items);
+    if (items[activeSuggIndex]) items[activeSuggIndex].scrollIntoView({ block: 'nearest' });
   } else if (e.key === 'Enter') {
     if (activeSuggIndex >= 0 && currentSuggestions[activeSuggIndex]) {
       e.preventDefault();
@@ -1054,6 +1087,7 @@ const NEAR_K = 50;
 const NEAR_RADII = [2000, 5000, Infinity];
 let nearRadiusIdx = 0;
 let nearStats = null;
+let lookupGen = 0;              // increments per postal lookup; a stale reply is ignored
 
 const fmtRadius = m => isFinite(m) ? (m >= 1000 ? (m / 1000) + 'km' : m + 'm') : 'anywhere';
 // For a distance we have just described as being OUTSIDE a radius, always round away
@@ -1088,6 +1122,9 @@ function updateNearBanner() {
   }
 
   const parts = [msg, 'Straight-line, not walking distance.'];
+  // The map is the one feature that sends location off-device: tile requests to
+  // OpenStreetMap encode the area being viewed. Say so while it is open.
+  if (!mapEl.hidden) parts.push('Map tiles come from OpenStreetMap, which sees the map area you view.');
 
   const canWiden = nearRadiusIdx < NEAR_RADII.length - 1 && beyond > 0;
   const widenTo = canWiden ? NEAR_RADII[nearRadiusIdx + 1] : null;
@@ -1119,6 +1156,7 @@ function setBanner(html, isErr) {
 }
 
 function exitNearMode() {
+  lookupGen++;                  // a lookup still in flight must not re-enter Near Me
   nearPoint = null;
   nearStats = null;
   nearRadiusIdx = 0;
@@ -1150,7 +1188,18 @@ nearBtn.addEventListener('click', () => {
   setBanner('Requesting your location — your browser will ask for permission.');
   nearBtn.disabled = true;
   navigator.geolocation.getCurrentPosition(
-    pos => { nearBtn.disabled = false; enterNearMode(pos.coords.latitude, pos.coords.longitude, 'your location'); },
+    pos => {
+      nearBtn.disabled = false;
+      const { latitude: lat, longitude: lon } = pos.coords;
+      // Same bounding box the data pipeline uses. Outside it, "nearest merchant is
+      // 10,850km away" is true and useless; say what is actually going on instead.
+      if (lat < 1.15 || lat > 1.48 || lon < 103.6 || lon > 104.1) {
+        setBanner('You appear to be outside Singapore. Enter a Singapore postal code instead.', true);
+        nearPostalEl.focus();
+        return;
+      }
+      enterNearMode(lat, lon, 'your location');
+    },
     err => {
       nearBtn.disabled = false;
       const msg = {
@@ -1171,15 +1220,36 @@ async function useNearPostal() {
   // Most postal codes are already in POSTAL, so no network call is needed.
   const local = coordsFor(v);
   if (local) { enterNearMode(local.lat, local.lon, 'S' + v); return; }
-  setBanner('Looking up that postal code…');
+  // Only codes not in the embedded data reach the network. Say so: this is the one place
+  // a typed location leaves the device.
+  const gen = ++lookupGen;
+  // Manual AbortController rather than AbortSignal.timeout(), which older engines lack.
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 8000);
+  nearGoEl.disabled = true;
+  // Go is disabled while this is in flight, so the interim banner must carry its own
+  // way out; otherwise a hung lookup leaves the user with nothing to press for 8s.
+  setBanner('Looking up that postal code via OneMap… <button type="button" id="nearcancel">Cancel</button>');
+  document.getElementById('nearcancel').addEventListener('click', () => {
+    lookupGen++;                 // marks this reply stale even if it lands later
+    ctrl.abort();
+    if (nearPoint) updateNearBanner(); else setBanner('');
+  });
   try {
-    const res = await fetch(`https://www.onemap.gov.sg/api/common/elastic/search?searchVal=${v}&returnGeom=Y&getAddrDetails=Y`);
+    const res = await fetch(`https://www.onemap.gov.sg/api/common/elastic/search?searchVal=${v}&returnGeom=Y&getAddrDetails=Y`, { signal: ctrl.signal });
     const j = await res.json();
+    if (gen !== lookupGen) return;   // user cleared or typed another code meanwhile
     const hit = (j.results || []).find(r => r.POSTAL === v);
     if (!hit) { setBanner(`No location found for S${v}. Check the postal code.`, true); return; }
     enterNearMode(parseFloat(hit.LATITUDE), parseFloat(hit.LONGITUDE), 'S' + v);
-  } catch {
-    setBanner('Postal lookup failed — check your connection, or try another code.', true);
+  } catch (err) {
+    if (gen !== lookupGen) return;
+    setBanner(err && err.name === 'AbortError'
+      ? 'Postal lookup timed out — check your connection and try again.'
+      : 'Postal lookup failed — check your connection, or try another code.', true);
+  } finally {
+    clearTimeout(timer);
+    nearGoEl.disabled = false;
   }
 }
 nearGoEl.addEventListener('click', useNearPostal);
@@ -1241,7 +1311,7 @@ function drawMap() {
 }
 
 mapToggle.addEventListener('click', async () => {
-  if (!mapEl.hidden) { mapEl.hidden = true; mapToggle.textContent = 'Show map'; return; }
+  if (!mapEl.hidden) { mapEl.hidden = true; mapToggle.textContent = 'Show map'; updateNearBanner(); return; }
   mapToggle.disabled = true;
   mapToggle.textContent = 'Loading map…';
   try {
@@ -1249,6 +1319,7 @@ mapToggle.addEventListener('click', async () => {
     mapEl.hidden = false;
     mapToggle.textContent = 'Hide map';
     drawMap();
+    updateNearBanner();
   } catch {
     setBanner('The map could not load. Everything else still works.', true);
     mapToggle.textContent = 'Show map';
@@ -1270,6 +1341,7 @@ const initialQuery = new URLSearchParams(location.search).get('q');
 if (initialQuery) qEl.value = initialQuery;
 
 doSearch();
+})();
 </script>
 
 <!-- Google tag (gtag.js) — GA4 property G-ZK37J9VYWP.
@@ -1282,7 +1354,9 @@ doSearch();
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
 
-  gtag('config', 'G-ZK37J9VYWP');
+  // page_location defaults to the full URL. ?q= can hold a typed postal code -- often
+  // someone's home -- so report the page without its query string.
+  gtag('config', 'G-ZK37J9VYWP', { page_location: location.origin + location.pathname });
 </script>
 
 </body>
