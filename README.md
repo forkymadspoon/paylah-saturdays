@@ -340,30 +340,45 @@ to the task queue before parsing the rest of the document, so a load-time event 
 that script ran before a bottom-placed `gtag` existed and was dropped. Measured, not
 theorised.
 
-`page_location` is pinned to the path only via **`gtag('set', …)`**, not just in `config`.
-This matters: a `config`-only value sanitises the first `page_view` and nothing else. Every
-`history.replaceState` from `syncUrl()` makes Enhanced Measurement fire a *fresh*
-`page_view`, and those carried the real URL — `?q=` and `?near=`, either of which can hold
-a postal code. `gtag('set')` applies to every subsequent hit.
+`page_location` is pinned to the path only via **`gtag('set', …)`**, not just in `config`,
+because a `config`-only value sanitises the first `page_view` and nothing else. This makes
+every event *we* send carry a bare path — verified on the live site.
+
+It does **not** fix the automatic hits; see below.
 
 GA4 sets cookies and collects visitor data, and there is currently **no consent banner**.
 That is generally acceptable under Singapore's PDPA for basic analytics, but GDPR expects
 consent before analytics cookies for EU visitors — worth addressing with Google Consent
 Mode or a cookieless alternative if that audience matters.
 
-### ⚠️ One leak that code cannot close
+### ⚠️ Two leaks that code cannot close — action needed in the GA4 property
 
-Enhanced Measurement's **Site search** reads the *real* `window.location`, not the
-`page_location` we configure. With `?q=520107` in the URL it sends
-`view_search_results` with `ep.search_term=520107` — verified by capturing the outgoing
-requests. Our own `?q=` parameter is the vector, so this fires on shared links and after
-any search that `syncUrl()` writes to the URL.
+Enhanced Measurement generates its own hits, and they read the **real** `window.location`,
+ignoring whatever `page_location` the page configures. Measured on the live site with
+`?q=520107&near=520107`:
 
-**Fix, and it is a property setting, not code:** GA4 → Admin → Data streams → the web
-stream → Enhanced measurement → gear icon → untick **Site search**. Nothing on the page can
-override it. (Optional hardening: rename the URL parameter from `q` to something outside
-GA4's default search-param list — `q, s, search, query, keyword, id` — but that breaks
-already-shared links and the `SearchAction` schema, so it is a product decision.)
+| Hit | Carries |
+|---|---|
+| `near_me` and every other custom event | bare path — clean |
+| `page_view` (fired on each `history.replaceState` from `syncUrl()`) | **full URL**, `?q=` and `?near=` included |
+| `view_search_results` | **`ep.search_term=520107`** |
+
+Since `syncUrl()` runs on every search settle and Near Me action, a typed postal code —
+often someone's home — reaches Google on ordinary use. **No page-side code prevents this.**
+
+**Fix — GA4 → Admin → Data streams → web stream → Enhanced measurement → gear icon:**
+
+1. Untick **Site search** → stops `ep.search_term`.
+2. Untick **Page changes based on browser history events** → stops the extra `page_view`s.
+
+Neither costs anything real here: the page is a single route, so history-based page views
+add no insight, and site-search reporting was never going to work with a sanitised
+`page_location` anyway.
+
+**If those toggles are not acceptable,** the only code-side alternative is to stop writing
+state to the URL continuously — build the shareable URL solely when someone presses Share,
+instead of on every keystroke via `syncUrl()`. That keeps shareable links but gives up
+back/forward restore and copy-the-address-bar sharing. A product decision, not a bug fix.
 
 ## Custom events
 
