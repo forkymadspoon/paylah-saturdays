@@ -543,6 +543,32 @@ footer {
 }
 footer a { color: var(--text-muted); }
 </style>
+<!-- Google tag (gtag.js). Deliberately ABOVE the page script, not at the end of <body>:
+     the page's inline script is ~1.8MB, and after executing it the browser yields to the
+     task queue before parsing the rest of the document. A load-time event fired from that
+     script therefore ran before a bottom-placed gtag existed and was silently dropped --
+     measured, not theorised. Loading here means gtag is defined before anything calls it.
+     The loader is async, so this costs no render-blocking time. -->
+<!-- Google tag (gtag.js) — GA4 property G-ZK37J9VYWP.
+     The Content-Security-Policy in <head> allows googletagmanager.com for this
+     script and google-analytics.com for the measurement calls it sends. Removing
+     this tag? Drop those origins from the CSP too, so the allowlist stays minimal. -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-ZK37J9VYWP"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  // page_location defaults to the full URL. ?q= can hold a typed postal code -- often
+  // someone's home -- so report the page without its query string.
+  // page_location must be a PERSISTENT default, not a config-only value. Setting it only
+  // in config sanitises the first page_view; every later hit -- including the extra
+  // page_view that Enhanced Measurement fires on each history.replaceState from syncUrl()
+  // -- carried the real URL, query string and all. That leaked ?q= and ?near=, which can
+  // hold a postal code. gtag('set') applies to every subsequent hit.
+  gtag('set', { page_location: location.origin + location.pathname });
+  gtag('config', 'G-ZK37J9VYWP', { page_location: location.origin + location.pathname });
+</script>
 </head>
 <body>
 <div class="wrap">
@@ -607,6 +633,22 @@ footer a { color: var(--text-muted); }
 // Everything lives inside one closure: 67 top-level bindings were sharing the global
 // scope with the analytics loader and any script added later.
 (() => {
+// ---------------------------------------------------------------------------
+// Analytics. Every event carries the SHAPE of what happened -- counts, enums,
+// buckets -- and never what anyone typed. page_location is already stripped of its
+// query string because ?q= can hold a postal code, often someone's home; sending a
+// search term, postal code or coordinate in an event param would reopen exactly that
+// hole. Nothing below is allowed to identify a person or a place they looked for.
+// ---------------------------------------------------------------------------
+function track(name, params) {
+  // gtag is loaded above this script, so it exists by now. The guard is for ad blockers,
+  // which remove it entirely -- analytics must never break the page.
+  try { if (typeof gtag === 'function') gtag('event', name, params || {}); } catch {}
+}
+const resultBucket = n => n === 0 ? '0' : n <= 10 ? '1-10' : n <= 100 ? '11-100' : '100+';
+const lenBucket    = n => n <= 2 ? '1-2' : n <= 5 ? '3-5' : n <= 10 ? '6-10' : '11+';
+const countBucket  = n => n === 0 ? '0' : n <= 5 ? '1-5' : n <= 20 ? '6-20' : '20+';
+
 // Per-merchant nearest MRT/LRT, replacing the previous area-level approximation.
 // The old lookup mapped ~26 broad DBS "Area" groupings to a handful of stations each,
 // so Simei, Tampines and Pasir Ris -- different stations, kilometres apart -- all
@@ -783,6 +825,7 @@ CATEGORIES.forEach(cat => {
     }
     renderLimit = PAGE;
     doSearch();
+    track('filter_category', { category: cat, action: activeCategory ? 'apply' : 'clear' });
   });
   filtersEl.appendChild(chip);
 });
@@ -799,6 +842,7 @@ favChip.addEventListener('click', () => toggleFavOnly(!favOnly));
 filtersEl.appendChild(favChip);
 function toggleFavOnly(on) {
   favOnly = !!on && favs.size > 0;
+  if (favOnly) track('my_stalls_opened');
   favChip.classList.toggle('active', favOnly);
   favChip.setAttribute('aria-pressed', String(favOnly));
   renderLimit = PAGE;
@@ -971,8 +1015,12 @@ function renderSuggestions(list) {
   });
 }
 
+const SUGG_KIND = { name: 'merchant', area: 'place', hood: 'place', mrt: 'station', service: 'category', postal: 'postal' };
 function applySuggestion(s) {
   if (!s) return;
+  // Which KIND of suggestion was taken and where it sat in the list -- this is what
+  // shows whether putting merchant names first was the right call. Not the label.
+  track('suggestion_selected', { kind: SUGG_KIND[s.type] || s.type, position: currentSuggestions.indexOf(s) });
   if (s.type === 'service') {
     activeCategory = s.value;
     qEl.value = '';
@@ -1113,7 +1161,11 @@ function render(matches) {
     const btn = document.createElement('button');
     btn.className = 'load-more';
     btn.textContent = `Show ${Math.min(PAGE, matches.length - renderLimit).toLocaleString()} more (of ${matches.length.toLocaleString()})`;
-    btn.onclick = () => { renderLimit += PAGE; render(matches); if (nearPoint && !mapEl.hidden) drawMap(); };
+    btn.onclick = () => {
+      renderLimit += PAGE; render(matches);
+      if (nearPoint && !mapEl.hidden) drawMap();
+      track('show_more', { page: renderLimit / PAGE });
+    };
     resultsEl.appendChild(btn);
   }
 }
@@ -1140,19 +1192,25 @@ resultsEl.addEventListener('click', async (e) => {
     saveFavs();
     star.setAttribute('aria-pressed', String(favs.has(k)));
     updateFavChip();
+    // Whether a star went on or off and roughly how many are saved -- never which stall.
+    track('favourite_toggled', { action: favs.has(k) ? 'add' : 'remove', total_bucket: countBucket(favs.size) });
     if (favOnly) doSearch();            // un-starring inside "My stalls" removes the row
     return;
   }
+  // The Maps link is an <a class="act">; the Share control is a <button>, so this
+  // branch cannot swallow it.
+  if (e.target.closest('a.act')) { track('open_in_maps'); return; }
   const share = e.target.closest('.share');
   if (share) {
     const url = location.origin + location.pathname + '?q=' + encodeURIComponent(displayPostal(r[3]));
     const text = `${r[0]} — ${[r[1], r[2]].filter(Boolean).join(', ')} (S${displayPostal(r[3])}). On the PayLah! Saturdays list.`;
     if (navigator.share) {              // native sheet on phones; a dismissed sheet is not an error
-      try { await navigator.share({ title: r[0], text, url }); } catch {}
+      // Only count a share that actually resolved -- a dismissed sheet rejects here.
+      try { await navigator.share({ title: r[0], text, url }); track('share_merchant', { method: 'native' }); } catch {}
       return;
     }
-    try { await navigator.clipboard.writeText(url); share.textContent = 'Copied'; }
-    catch { share.textContent = 'Copy failed'; }
+    try { await navigator.clipboard.writeText(url); share.textContent = 'Copied'; track('share_merchant', { method: 'clipboard' }); }
+    catch { share.textContent = 'Copy failed'; track('share_merchant', { method: 'clipboard_failed' }); }
     setTimeout(() => { share.textContent = 'Share'; }, 2000);
   }
 });
@@ -1165,6 +1223,14 @@ qEl.addEventListener('input', () => {
   debounceTimer = setTimeout(() => {
     doSearch();
     renderSuggestions(buildSuggestions(val));
+    // On the debounce settle, never per keystroke. Shape only: how long the query was
+    // and how many rows came back -- never the query itself.
+    const t = val.trim();
+    if (t.length >= 2) {
+      const shape = { query_kind: /^\d+$/.test(t) ? 'numeric' : 'text', query_len: lenBucket(t.length) };
+      track('search_performed', Object.assign({ result_bucket: resultBucket(currentMatches.length) }, shape));
+      if (currentMatches.length === 0) track('zero_results', shape);
+    }
   }, 60);
 });
 
@@ -1316,6 +1382,7 @@ nearBtn.addEventListener('click', () => {
   if (!navigator.geolocation) {
     setBanner('This browser cannot share your location. Enter a postal code instead.', true);
     nearPostalEl.focus();
+    track('near_me', { method: 'geolocation', outcome: 'no_geolocation' });
     return;
   }
   setBanner('Requesting your location — your browser will ask for permission.');
@@ -1329,9 +1396,12 @@ nearBtn.addEventListener('click', () => {
       if (lat < 1.15 || lat > 1.48 || lon < 103.6 || lon > 104.1) {
         setBanner('You appear to be outside Singapore. Enter a Singapore postal code instead.', true);
         nearPostalEl.focus();
+        track('near_me', { method: 'geolocation', outcome: 'outside_sg' });
         return;
       }
       enterNearMode(lat, lon, 'your location');
+      // How many were actually within the radius -- the count, never the coordinates.
+      track('near_me', { method: 'geolocation', outcome: 'ok', result_bucket: resultBucket(nearStats ? nearStats.within : 0) });
     },
     err => {
       nearBtn.disabled = false;
@@ -1342,6 +1412,7 @@ nearBtn.addEventListener('click', () => {
       }[err.code] || 'Could not get your location. Enter a postal code instead.';
       setBanner(msg, true);
       nearPostalEl.focus();
+      track('near_me', { method: 'geolocation', outcome: { 1: 'denied', 2: 'unavailable', 3: 'timeout' }[err.code] || 'failed' });
     },
     { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
   );
@@ -1349,10 +1420,18 @@ nearBtn.addEventListener('click', () => {
 
 async function useNearPostal() {
   const v = nearPostalEl.value.trim();
-  if (!/^\d{6}$/.test(v)) { setBanner('Enter a 6-digit Singapore postal code.', true); return; }
+  if (!/^\d{6}$/.test(v)) {
+    setBanner('Enter a 6-digit Singapore postal code.', true);
+    track('near_me', { method: 'postal', outcome: 'invalid' });
+    return;
+  }
   // Most postal codes are already in POSTAL, so no network call is needed.
   const local = coordsFor(v);
-  if (local) { enterNearMode(local.lat, local.lon, 'S' + v); return; }
+  if (local) {
+    enterNearMode(local.lat, local.lon, 'S' + v);
+    track('near_me', { method: 'postal', outcome: 'ok', result_bucket: resultBucket(nearStats ? nearStats.within : 0) });
+    return;
+  }
   // Only codes not in the embedded data reach the network. Say so: this is the one place
   // a typed location leaves the device.
   const gen = ++lookupGen;
@@ -1367,19 +1446,27 @@ async function useNearPostal() {
     lookupGen++;                 // marks this reply stale even if it lands later
     ctrl.abort();
     if (nearPoint) updateNearBanner(); else setBanner('');
+    track('near_me', { method: 'postal', outcome: 'cancelled' });
   });
   try {
     const res = await fetch(`https://www.onemap.gov.sg/api/common/elastic/search?searchVal=${v}&returnGeom=Y&getAddrDetails=Y`, { signal: ctrl.signal });
     const j = await res.json();
     if (gen !== lookupGen) return;   // user cleared or typed another code meanwhile
     const hit = (j.results || []).find(r => r.POSTAL === v);
-    if (!hit) { setBanner(`No location found for S${v}. Check the postal code.`, true); return; }
+    if (!hit) {
+      setBanner(`No location found for S${v}. Check the postal code.`, true);
+      track('near_me', { method: 'postal', outcome: 'not_found' });
+      return;
+    }
     enterNearMode(parseFloat(hit.LATITUDE), parseFloat(hit.LONGITUDE), 'S' + v);
+    track('near_me', { method: 'postal', outcome: 'ok', result_bucket: resultBucket(nearStats ? nearStats.within : 0) });
   } catch (err) {
     if (gen !== lookupGen) return;
-    setBanner(err && err.name === 'AbortError'
+    const aborted = err && err.name === 'AbortError';
+    setBanner(aborted
       ? 'Postal lookup timed out — check your connection and try again.'
       : 'Postal lookup failed — check your connection, or try another code.', true);
+    track('near_me', { method: 'postal', outcome: aborted ? 'timeout' : 'failed' });
   } finally {
     clearTimeout(timer);
     nearGoEl.disabled = false;
@@ -1487,7 +1574,16 @@ function syncUrl() {
   try { history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '') + location.hash); } catch {}
 }
 
+// .ics is not in GA4's default file-download extension list, so this never fires
+// automatically the way the PDF link does.
+const icsLink = document.querySelector('.sub a[download]');
+if (icsLink) icsLink.addEventListener('click', () => track('calendar_download'));
+
 const params = new URLSearchParams(location.search);
+// Which state keys a shared link carried -- the key names only, never their values.
+// This is the return leg of the WhatsApp loop that share_merchant starts.
+const sharedKeys = ['q', 'cat', 'near', 'r', 'fav'].filter(k => params.get(k) !== null);
+if (sharedKeys.length) track('arrived_shared_link', { params: sharedKeys.join('+') });
 const initialQuery = params.get('q');
 if (initialQuery) qEl.value = initialQuery;
 const initialCat = params.get('cat');
@@ -1539,21 +1635,5 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
 doSearch();
 })();
 </script>
-
-<!-- Google tag (gtag.js) — GA4 property G-ZK37J9VYWP.
-     The Content-Security-Policy in <head> allows googletagmanager.com for this
-     script and google-analytics.com for the measurement calls it sends. Removing
-     this tag? Drop those origins from the CSP too, so the allowlist stays minimal. -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-ZK37J9VYWP"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  // page_location defaults to the full URL. ?q= can hold a typed postal code -- often
-  // someone's home -- so report the page without its query string.
-  gtag('config', 'G-ZK37J9VYWP', { page_location: location.origin + location.pathname });
-</script>
-
 </body>
 </html>

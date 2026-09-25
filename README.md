@@ -334,13 +334,69 @@ the experience for people who search rather than scroll.
 
 ## Analytics and privacy
 
-Google Analytics 4 (property `G-ZK37J9VYWP`) is installed near the bottom of
-`index.html`. It is configured with `page_location` set to the path only, so a `?q=`
-query — which can hold a typed postal code — never reaches Google. GA4 sets cookies and
-collects visitor data, and there is currently **no consent banner**. That is generally
-acceptable under Singapore's PDPA for basic analytics, but GDPR expects consent before
-analytics cookies for EU visitors — worth addressing with Google Consent Mode or a
-cookieless alternative if that audience matters.
+Google Analytics 4 (property `G-ZK37J9VYWP`) is loaded **above** the page script, not at
+the bottom: the page's inline script is ~1.8 MB, and after executing it the browser yields
+to the task queue before parsing the rest of the document, so a load-time event fired from
+that script ran before a bottom-placed `gtag` existed and was dropped. Measured, not
+theorised.
+
+`page_location` is pinned to the path only via **`gtag('set', …)`**, not just in `config`.
+This matters: a `config`-only value sanitises the first `page_view` and nothing else. Every
+`history.replaceState` from `syncUrl()` makes Enhanced Measurement fire a *fresh*
+`page_view`, and those carried the real URL — `?q=` and `?near=`, either of which can hold
+a postal code. `gtag('set')` applies to every subsequent hit.
+
+GA4 sets cookies and collects visitor data, and there is currently **no consent banner**.
+That is generally acceptable under Singapore's PDPA for basic analytics, but GDPR expects
+consent before analytics cookies for EU visitors — worth addressing with Google Consent
+Mode or a cookieless alternative if that audience matters.
+
+### ⚠️ One leak that code cannot close
+
+Enhanced Measurement's **Site search** reads the *real* `window.location`, not the
+`page_location` we configure. With `?q=520107` in the URL it sends
+`view_search_results` with `ep.search_term=520107` — verified by capturing the outgoing
+requests. Our own `?q=` parameter is the vector, so this fires on shared links and after
+any search that `syncUrl()` writes to the URL.
+
+**Fix, and it is a property setting, not code:** GA4 → Admin → Data streams → the web
+stream → Enhanced measurement → gear icon → untick **Site search**. Nothing on the page can
+override it. (Optional hardening: rename the URL parameter from `q` to something outside
+GA4's default search-param list — `q, s, search, query, keyword, id` — but that breaks
+already-shared links and the `SearchAction` schema, so it is a product decision.)
+
+## Custom events
+
+Twelve events, all **shape only** — counts, enums and buckets, never the search term, a
+postal code, coordinates, a merchant name or a favourite key. A `track()` helper guards on
+`typeof gtag === 'function'` so an ad blocker can never break the page.
+
+| Event | Params |
+|---|---|
+| `search_performed` | `query_kind`, `query_len`, `result_bucket` |
+| `zero_results` | `query_kind`, `query_len` |
+| `suggestion_selected` | `kind`, `position` |
+| `filter_category` | `category`, `action` |
+| `near_me` | `method`, `outcome`, `result_bucket` |
+| `show_more` | `page` |
+| `share_merchant` | `method` |
+| `arrived_shared_link` | `params` (key names only, never values) |
+| `open_in_maps`, `my_stalls_opened`, `calendar_download` | — |
+| `favourite_toggled` | `action`, `total_bucket` |
+
+`search_performed`, not GA4's recommended `search`: that event expects a `search_term`,
+which we deliberately never send, so reusing the name would leave the built-in search
+reports permanently empty and misleading. `calendar_download` is custom because `.ics` is
+not in GA4's default file-download extension list — the DBS PDF link does fire
+`file_download` automatically.
+
+**Params are invisible until registered.** They appear in DebugView immediately but are
+silently dropped from standard reports until each is added in Admin → Custom definitions
+(event-scoped, 50 max): `query_kind`, `query_len`, `result_bucket`, `kind`, `position`,
+`category`, `action`, `method`, `outcome`, `page`, `params`, `total_bucket`.
+
+Two things GA cannot see here: **offline visits** (`sw.js` never caches GA, by design) and
+traffic from **ad blockers** — treat totals as a floor.
 
 **Location handling.** A device fix from "Near me" is used only in the browser and is
 never sent anywhere. Two things do leave the device, and the page says so at the point
